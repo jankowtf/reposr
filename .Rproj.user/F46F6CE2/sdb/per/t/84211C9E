@@ -1,0 +1,16 @@
+{
+    "contents" : "Sys.setenv(language=\"en\")\n\n## Debug //\nupdate.packages(checkBuilt = TRUE)\ninstall.packages(\"RCurl\", type=\"source\")\ninstall.packages(\"c:/temp/RCurl_1.95-4.3.tar.gz\", repos=NULL, type=\"source\")\n\n\n## Global //\ninstall.packages(\"devtools\")\nrequire(\"devtools\")\ndevtools::install_github(\"rstudio/packrat\")\n\n## Project //\n# install.packages(\"testthat\")\nrequire(\"testthat\")\n\npackrat::snapshot()\n",
+    "created" : 1406710082278.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1743617057",
+    "id" : "84211C9E",
+    "lastKnownWriteTime" : 1406710156,
+    "path" : "Q:/home/wsp/rapp2/rapp.core.repos/rapp/packages.r",
+    "project_path" : "rapp/packages.r",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

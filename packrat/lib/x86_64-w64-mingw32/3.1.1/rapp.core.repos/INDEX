@@ -1,0 +1,15 @@
+ensureRepository        Ensure Repository
+ensureRepositoryRegistryFiles
+                        Ensure Repository Registry Files
+getExpandedRepository   Get Repository Scaffold
+getPartialRepositoryScaffold
+                        Get Partial Repository Scaffold
+getRepositoryPathByType
+                        Select Repository Path By Type
+getRepositoryType       Get Repository Type
+normalizeRepositoryPath
+                        Normalize Repository Path
+rapp.core.repos-package
+                        What the package does (short line) ~~ package
+                        title ~~
+refreshRepository       Refresh Repository

@@ -1,0 +1,40 @@
+PackratFormat: 1.4
+PackratVersion: 0.4.0.5
+RVersion: 3.1.1
+Repos: CRAN=http://cran.rstudio.com,
+    CRANextra=http://www.stats.ox.ac.uk/pub/RWin
+
+Package: brew
+Source: CRAN
+Version: 1.0-6
+Hash: 9d92cc5ac60123fdb7b0daa3ae83bf99
+
+Package: digest
+Source: CRAN
+Version: 0.6.4
+Hash: e4bf0e79b15a352510aff0de905d31e2
+
+Package: packrat
+Source: github
+Version: 0.4.0.5
+Hash: 76abbefacf6fda8859f3bb3ac0ab63ca92384829
+GithubRepo: packrat
+GithubUsername: rstudio
+GithubRef: master
+GithubSha1: 76abbefacf6fda8859f3bb3ac0ab63ca92384829
+
+Package: Rcpp
+Source: CRAN
+Version: 0.11.2
+Hash: ef2b1a5e45d1461bd720e4ebbe48e601
+
+Package: roxygen2
+Source: CRAN
+Version: 4.0.1
+Hash: 90152a287fce464df1dd8e9d198e3a08
+Requires: brew, digest, Rcpp, stringr
+
+Package: stringr
+Source: CRAN
+Version: 0.6.2
+Hash: cdde0cfa0f52cffeaca23a11a3899779
