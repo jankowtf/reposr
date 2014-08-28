@@ -2,37 +2,70 @@
 \docType{methods}
 \name{ensureRepository}
 \alias{ensureRepository}
+\alias{ensureRepository,RappExpandedPackageRepositoryS3,ANY-method}
+\alias{ensureRepository,RappPackageRepositoryS3,character-method}
+\alias{ensureRepository,RappPackageRepositoryS3,missing-method}
 \alias{ensureRepository,character,character-method}
 \alias{ensureRepository,character,missing-method}
 \title{Ensure Repository}
 \usage{
-ensureRepository(path = ".", rversion = paste(R.version$major,
+ensureRepository(repos = ".", rversion = paste(R.version$major,
   unlist(strsplit(R.version$minor, split = "\\\\."))[2], sep = "."))
 
-\S4method{ensureRepository}{character,character}(path = ".",
+\S4method{ensureRepository}{RappPackageRepositoryS3,character}(repos = ".",
   rversion = paste(R.version$major, unlist(strsplit(R.version$minor, split =
   "\\\\."))[2], sep = "."))
 
-\S4method{ensureRepository}{character,missing}(path = ".",
+\S4method{ensureRepository}{RappPackageRepositoryS3,missing}(repos = ".",
+  rversion = paste(R.version$major, unlist(strsplit(R.version$minor, split =
+  "\\\\."))[2], sep = "."))
+
+\S4method{ensureRepository}{character,missing}(repos = ".",
+  rversion = paste(R.version$major, unlist(strsplit(R.version$minor, split =
+  "\\\\."))[2], sep = "."))
+
+\S4method{ensureRepository}{character,character}(repos = ".",
+  rversion = paste(R.version$major, unlist(strsplit(R.version$minor, split =
+  "\\\\."))[2], sep = "."))
+
+\S4method{ensureRepository}{RappExpandedPackageRepositoryS3,ANY}(repos = ".",
   rversion = paste(R.version$major, unlist(strsplit(R.version$minor, split =
   "\\\\."))[2], sep = "."))
 }
 \arguments{
-\item{path}{\strong{Signature argument}.
-Object containing path information.}
+\item{repos}{\strong{Signature argument}.
+Object containing repos information.}
 
 \item{rversion}{\strong{Signature argument}.
 Object containing version information.}
 
-\item{path}{\code{\link{character}}.}
+\item{repos}{\code{\link{RappPackageRepositoryS3}}.}
 
 \item{rversion}{\code{\link{character}}.}
 
-\item{path}{\code{\link{character}}.}
+\item{repos}{\code{\link{RappPackageRepositoryS3}}.}
 
 \item{rversion}{\code{\link{missing}}.}
+
+\item{repos}{\code{\link{character}}.}
+
+\item{rversion}{\code{\link{missing}}.}
+
+\item{repos}{\code{\link{character}}.}
+
+\item{rversion}{\code{\link{character}}.}
+
+\item{repos}{\code{\link{RappExpandedPackageRepositoryS3}}.}
+
+\item{rversion}{\code{\link{ANY}}.}
 }
 \value{
+TODO
+
+TODO
+
+TODO
+
 TODO
 
 TODO
@@ -42,9 +75,15 @@ Ensures existence of an R package repository.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{path = character,rversion = character}: 
+\item \code{repos = RappPackageRepositoryS3,rversion = character}: 
 
-\item \code{path = character,rversion = missing}: 
+\item \code{repos = RappPackageRepositoryS3,rversion = missing}: 
+
+\item \code{repos = character,rversion = missing}: 
+
+\item \code{repos = character,rversion = character}: 
+
+\item \code{repos = RappExpandedPackageRepositoryS3,rversion = ANY}: 
 }}
 \examples{
 \dontrun{
@@ -58,8 +97,5 @@ Janko Thyson \email{janko.thyson@rappster.de}
 }
 \references{
 \url{http://www.rappster.de/rapp.core.repos}
-}
-\seealso{
-\code{\link[rapp2]{ensureRepository-character-method}}
 }
 

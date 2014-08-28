@@ -3,8 +3,8 @@
 #' @description 
 #' Normalizes repository paths.
 #' 
-#' @param path \strong{Signature argument}.
-#'    Object containing path information.
+#' @param repos \strong{Signature argument}.
+#'    Object containing repository path information.
 #' @param type \strong{Signature argument}.
 #'    Object containing normalization type information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
@@ -13,111 +13,117 @@
 #' @export normalizeRepositoryPath
 setGeneric(name="normalizeRepositoryPath", 
   signature = c(
-    "path",
+    "repos",
     "type"
   ),
   def = function(
-      path=".",
-      type=c("filesystem", "url")
+    repos = ".",
+    type = c("fs", "url_file", "url_http", "url_ftp")
   ) {
   standardGeneric("normalizeRepositoryPath")
 })
 
-#' @param path \code{\link{character}}. 
+#' @param repos \code{\link{character}}. 
 #' @param type \code{\link{character}}. 
 #' @return \code{\link{character}}. Normalized path. 
 #' @describeIn normalizeRepositoryPath
 #' @export
 setMethod(f = "normalizeRepositoryPath", 
   signature = signature(
-      path = "character",
-      type = "character"
+    repos = "character",
+    type = "character"
   ), 
   definition = function(
-      path,
-      type
+    repos,
+    type
   ) {
       
-  type <- match.arg(type, c("filesystem", "url"))
-  if (type == "filesystem") {
-    out <- gsub("^file:///", "", path)
-  } else if (type == "url") {
-    if (!grepl("^file:///", path)) {
-      out <- paste0("file:///", path)
-    } else {
-      out <- path
-    }
+  type <- match.arg(type, c("fs", "url_file", "url_http", "url_ftp"))
+  
+#   has_url_prefix <- length(grep(":///", repos)) > 0
+  repos_raw <- gsub("///", "", gsub("^.*(?=///)", "", repos, perl = TRUE))
+  repos_raw <- normalizePath(repos_raw, winslash = "/", mustWork = FALSE)
+  if (type == "fs") {
+    out <- repos_raw
+  } else if (type == "url_file") {
+    out <- paste0("file:///", repos_raw)
+  } else if (type == "url_http"){
+    out <- paste0("http:///", repos_raw)
+  } else if (type == "url_ftp"){
+    out <- paste0("ftp:///", repos_raw)
+  } else {
+    out <- repos_raw
   }
   out
   
   } 
 )
 
-#' @param path \code{\link{character}}. 
+#' @param repos \code{\link{character}}. 
 #' @param type \code{\link{missing}}. 
 #' @return \code{\link{character}}. Normalized path. 
 #' @describeIn normalizeRepositoryPath
 #' @export
 setMethod(f = "normalizeRepositoryPath", 
   signature = signature(
-    path = "character",
+    repos = "character",
     type = "missing"
   ), 
   definition = function(
-    path,
+    repos,
     type
   ) {
     
     normalizeRepositoryPath(
-      path=path,
-      type=type
+      repos = repos,
+      type = type
     )
     
   } 
 )
 
-#' @param path \code{\link{RappRepositoryS3}}. 
+#' @param repos \code{\link{RappPackageRepositoryS3}}. 
 #' @param type \code{\link{character}}. 
 #' @return \code{\link{character}}. Normalized path. 
 #' @describeIn normalizeRepositoryPath
 #' @export
 setMethod(f = "normalizeRepositoryPath", 
   signature = signature(
-    path = "RappRepositoryS3",
+    repos = "RappPackageRepositoryS3",
     type = "character"
   ), 
   definition = function(
-    path,
+    repos,
     type
   ) {
     
-    normalizeRepositoryPath(
-      path = as.character(path),
-      type = type
-    )
+  normalizeRepositoryPath(
+    repos = as.character(repos),
+    type = type
+  )
     
   } 
 )
 
-#' @param path \code{\link{RappRepositoryS3}}. 
+#' @param repos \code{\link{RappPackageRepositoryS3}}. 
 #' @param type \code{\link{missing}}. 
 #' @return \code{\link{character}}. Normalized path. 
 #' @describeIn normalizeRepositoryPath
 #' @export
 setMethod(f = "normalizeRepositoryPath", 
   signature = signature(
-    path = "RappRepositoryS3",
+    repos = "RappPackageRepositoryS3",
     type = "missing"
   ), 
   definition = function(
-    path,
+    repos,
     type
   ) {
     
-    normalizeRepositoryPath(
-      path = as.character(path),
-      type = type
-    )
+  normalizeRepositoryPath(
+    repos = as.character(repos),
+    type = type
+  )
     
   } 
 )

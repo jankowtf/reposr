@@ -2,20 +2,55 @@
 \docType{methods}
 \name{getRepositoryType}
 \alias{getRepositoryType}
+\alias{getRepositoryType,RappExpandedPackageRepositoryS3-method}
+\alias{getRepositoryType,RappPackageRepositoryMacBinaryS3-method}
+\alias{getRepositoryType,RappPackageRepositoryS3-method}
+\alias{getRepositoryType,RappPackageRepositorySourceS3-method}
+\alias{getRepositoryType,RappPackageRepositoryWinBinaryS3-method}
 \alias{getRepositoryType,character-method}
 \title{Get Repository Type}
 \usage{
 getRepositoryType(repos)
 
+\S4method{getRepositoryType}{RappExpandedPackageRepositoryS3}(repos)
+
 \S4method{getRepositoryType}{character}(repos)
+
+\S4method{getRepositoryType}{RappPackageRepositoryS3}(repos)
+
+\S4method{getRepositoryType}{RappPackageRepositoryMacBinaryS3}(repos)
+
+\S4method{getRepositoryType}{RappPackageRepositoryWinBinaryS3}(repos)
+
+\S4method{getRepositoryType}{RappPackageRepositorySourceS3}(repos)
 }
 \arguments{
 \item{repos}{\strong{Signature argument}.
 Object containing repository information.}
 
+\item{repos}{\code{\link{RappExpandedPackageRepositoryS3}}.}
+
 \item{repos}{\code{\link{character}}.}
+
+\item{repos}{\code{\link{RappPackageRepositoryS3}}.}
+
+\item{repos}{\code{\link{RappPackageRepositoryMacBinaryS3}}.}
+
+\item{repos}{\code{\link{RappPackageRepositoryWinBinaryS3}}.}
+
+\item{repos}{\code{\link{RappPackageRepositorySourceS3}}.}
 }
 \value{
+TODO
+
+TODO
+
+TODO
+
+TODO
+
+TODO
+
 TODO
 }
 \description{
@@ -23,7 +58,17 @@ Infers the repository type based on repository location.
 }
 \section{Methods (by class)}{
 \itemize{
+\item \code{RappExpandedPackageRepositoryS3}: 
+
 \item \code{character}: 
+
+\item \code{RappPackageRepositoryS3}: 
+
+\item \code{RappPackageRepositoryMacBinaryS3}: 
+
+\item \code{RappPackageRepositoryWinBinaryS3}: 
+
+\item \code{RappPackageRepositorySourceS3}: 
 }}
 \examples{
 \dontrun{

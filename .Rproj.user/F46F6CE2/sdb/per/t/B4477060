@@ -1,12 +1,12 @@
 {
-    "contents" : "context(\"package\")\n\ntest_that(\"ensureRepository\", {\n\n  path  <- file.path(tempdir(), \"repos\")\n  dir.create(path, recursive=TRUE, showWarnings=FALSE)\n  repos <- expandRepository(path=path)\n  expected <- TRUE\n  expect_equivalent(res <- ensureRepository(path=path), expected)\n  \n  on.exit(\n  {\n    if (grepl(basename(tempdir()), path)) {\n      unlink(path, recursive=TRUE, force=TRUE)\n    }\n  }\n    )\n  \n  }\n)\n\n",
+    "contents" : "context(\"package\")\n\ntest_that(\"ensureRepository\", {\n\n  path  <- normalizePath(file.path(tempdir(), \"repos\"), winslash=\"/\", \n                         mustWork=FALSE)\n  path \t<- asRepository(path)\n  dir.create(path, recursive=TRUE, showWarnings=FALSE)\n  repos <- getExpandedRepositoryPaths(path=path)\n  expected <- TRUE\n  expect_equivalent(res <- ensureRepository(path=path), expected)\n  \n  on.exit(\n  {\n    if (grepl(basename(tempdir()), path)) {\n      unlink(path, recursive=TRUE, force=TRUE)\n    }\n  }\n    )\n  \n  }\n)\n\n",
     "created" : 1406712509129.000,
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "1840775457",
+    "hash" : "1601449983",
     "id" : "B4477060",
-    "lastKnownWriteTime" : 1406732432,
+    "lastKnownWriteTime" : 1407236597,
     "path" : "Q:/home/wsp/rapp2/rapp.core.repos/tests/testthat/test-ensureRepository.r",
     "project_path" : "tests/testthat/test-ensureRepository.r",
     "properties" : {

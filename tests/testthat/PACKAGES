@@ -1,0 +1,17 @@
+Package: package.a
+Version: 0.1.0.1
+Imports: package.aa
+MD5sum: 4cd27d708412341f1dd2df94b0a48a93
+NeedsCompilation: no
+
+Package: package.b
+Version: 1.0
+Imports: package.a, package.bb
+MD5sum: 4cd27d708412341f1dd2df94b0a48a93
+NeedsCompilation: no
+
+Package: package.c
+Version: 0.1.2.3
+Imports: package.a, package.bb
+MD5sum: 4cd27d708412341f1dd2df94b0a48a93
+NeedsCompilation: no

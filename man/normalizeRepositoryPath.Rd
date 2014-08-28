@@ -2,34 +2,57 @@
 \docType{methods}
 \name{normalizeRepositoryPath}
 \alias{normalizeRepositoryPath}
+\alias{normalizeRepositoryPath,RappPackageRepositoryS3,character-method}
+\alias{normalizeRepositoryPath,RappPackageRepositoryS3,missing-method}
 \alias{normalizeRepositoryPath,character,character-method}
 \alias{normalizeRepositoryPath,character,missing-method}
 \title{Normalize Repository Path}
 \usage{
-normalizeRepositoryPath(path = ".", type = c("filesystem", "url"))
+normalizeRepositoryPath(repos = ".", type = c("fs", "url_file", "url_http",
+  "url_ftp"))
 
-\S4method{normalizeRepositoryPath}{character,character}(path = ".",
-  type = c("filesystem", "url"))
+\S4method{normalizeRepositoryPath}{character,character}(repos = ".",
+  type = c("fs", "url_file", "url_http", "url_ftp"))
 
-\S4method{normalizeRepositoryPath}{character,missing}(path = ".",
-  type = c("filesystem", "url"))
+\S4method{normalizeRepositoryPath}{character,missing}(repos = ".",
+  type = c("fs", "url_file", "url_http", "url_ftp"))
+
+
+  \S4method{normalizeRepositoryPath}{RappPackageRepositoryS3,character}(repos = ".",
+  type = c("fs", "url_file", "url_http", "url_ftp"))
+
+
+  \S4method{normalizeRepositoryPath}{RappPackageRepositoryS3,missing}(repos = ".",
+  type = c("fs", "url_file", "url_http", "url_ftp"))
 }
 \arguments{
-\item{path}{\strong{Signature argument}.
-Object containing path information.}
+\item{repos}{\strong{Signature argument}.
+Object containing repository path information.}
 
 \item{type}{\strong{Signature argument}.
 Object containing normalization type information.}
 
-\item{path}{\code{\link{character}}.}
+\item{repos}{\code{\link{character}}.}
 
 \item{type}{\code{\link{character}}.}
 
-\item{path}{\code{\link{character}}.}
+\item{repos}{\code{\link{character}}.}
+
+\item{type}{\code{\link{missing}}.}
+
+\item{repos}{\code{\link{RappPackageRepositoryS3}}.}
+
+\item{type}{\code{\link{character}}.}
+
+\item{repos}{\code{\link{RappPackageRepositoryS3}}.}
 
 \item{type}{\code{\link{missing}}.}
 }
 \value{
+\code{\link{character}}. Normalized path.
+
+\code{\link{character}}. Normalized path.
+
 \code{\link{character}}. Normalized path.
 
 \code{\link{character}}. Normalized path.
@@ -39,9 +62,13 @@ Normalizes repository paths.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{path = character,type = character}: 
+\item \code{repos = character,type = character}: 
 
-\item \code{path = character,type = missing}: 
+\item \code{repos = character,type = missing}: 
+
+\item \code{repos = RappPackageRepositoryS3,type = character}: 
+
+\item \code{repos = RappPackageRepositoryS3,type = missing}: 
 }}
 \examples{
 \dontrun{

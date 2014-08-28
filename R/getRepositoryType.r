@@ -19,22 +19,22 @@ setGeneric(name="getRepositoryType",
   standardGeneric("getRepositoryType")
 })
 
-#' @param repos \code{\link{RappExpandedRepositoryS3}}. 
+#' @param repos \code{\link{RappExpandedPackageRepositoryS3}}. 
 #' @return TODO 
 #' @describeIn getRepositoryType
 #' @export
 setMethod(f = "getRepositoryType", 
   signature = signature(
-      repos = "RappExpandedRepositoryS3"
+      repos = "RappExpandedPackageRepositoryS3"
   ), 
   definition = function(
       repos
   ) {
-     
+    
   tmp <- sapply(repos, function(ii) {
     basename(gsub("/contrib", "", dirname(ii)))
   })
-  sapply(tmp, function(ii) {
+  out <- sapply(tmp, function(ii) {
     switch(
       ii,
       "src"="source",
@@ -42,6 +42,11 @@ setMethod(f = "getRepositoryType",
       "windows"="win.binary"
     )
   })
+  if (is.null(out)) {
+    stop(paste0("Invalid type for path: ", tmp))
+  }
+  names(out) <- repos
+  out
   
   } 
 )
@@ -58,10 +63,86 @@ setMethod(f = "getRepositoryType",
     repos
   ) {
     
-    getRepositoryType(
-      repos = asExpandedRepository(path = repos)
-    )
+  getRepositoryType(
+    repos = asExpandedRepository(repos = repos)
+  )
     
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositoryS3}}. 
+#' @return TODO 
+#' @describeIn getRepositoryType
+#' @export
+setMethod(f = "getRepositoryType", 
+  signature = signature(
+    repos = "RappPackageRepositoryS3"
+  ), 
+  definition = function(
+    repos
+  ) {
+    
+  getRepositoryType(
+    repos = asExpandedRepository(repos = repos)
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositoryMacBinaryS3}}. 
+#' @return TODO 
+#' @describeIn getRepositoryType
+#' @export
+setMethod(f = "getRepositoryType", 
+  signature = signature(
+    repos = "RappPackageRepositoryMacBinaryS3"
+  ), 
+  definition = function(
+    repos
+  ) {
+    
+  out <- "mac.binary"
+  names(out) <- repos
+  out
+    
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositoryWinBinaryS3}}. 
+#' @return TODO 
+#' @describeIn getRepositoryType
+#' @export
+setMethod(f = "getRepositoryType", 
+  signature = signature(
+    repos = "RappPackageRepositoryWinBinaryS3"
+  ), 
+  definition = function(
+    repos
+  ) {
+    
+  out <- "win.binary"
+  names(out) <- repos
+  out  
+  
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositorySourceS3}}. 
+#' @return TODO 
+#' @describeIn getRepositoryType
+#' @export
+setMethod(f = "getRepositoryType", 
+  signature = signature(
+    repos = "RappPackageRepositorySourceS3"
+  ), 
+  definition = function(
+    repos
+  ) {
+    
+  out <- "source"
+  names(out) <- repos
+  out
+  
   } 
 )
 

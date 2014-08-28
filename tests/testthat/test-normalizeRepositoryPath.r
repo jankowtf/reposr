@@ -2,27 +2,29 @@ context("package")
 
 test_that("normalizeRepositoryPath", {
 
-  path  <- file.path(tempdir(), "repos")
-  expected <- path
-  expect_equivalent(res <- normalizeRepositoryPath(path = path), expected)
-  expected <- paste0("file:///", path)
-  expect_equivalent(res <- normalizeRepositoryPath(path = path, 
-      type = "url"), expected)
-  expect_equivalent(res <- normalizeRepositoryPath(path = res, 
-      type = "url"), expected)
-  expected <- path
-  expect_equivalent(res <- normalizeRepositoryPath(path = res), expected)
-    
-#  path  <- asRepository(path = path)
-#  expected <- path
-#  expect_equivalent(res <- normalizeRepositoryPath(path = path), expected)
-#  expected <- paste0("file:///", path)
-#  expect_equivalent(res <- normalizeRepositoryPath(path = path, 
-#      type = "url"), expected)
-#  expect_equivalent(res <- normalizeRepositoryPath(path = res, 
-#      type = "url"), expected)
-#  expected <- path
-#  expect_equivalent(res <- normalizeRepositoryPath(path = res), expected)
+  repos  <- file.path(tempdir(), "repos")
+  repos  <- normalizePath(repos, winslash = "/", mustWork = FALSE)
+  expected <- repos
+  expect_equivalent(res <- normalizeRepositoryPath(repos = repos), expected)
+  expected <- paste0("file:///", repos)
+  expect_equivalent(res <- normalizeRepositoryPath(repos = repos, 
+      type = "url_file"), expected)
+  expect_equivalent(res <- normalizeRepositoryPath(repos = res, 
+      type = "url_file"), expected)
+  expected <- repos
+  expect_equivalent(res <- normalizeRepositoryPath(repos = res), expected)
+
+  expected <- paste0("http:///", repos)
+  expect_equivalent(res <- normalizeRepositoryPath(repos = repos, 
+      type = "url_http"), expected)
+  
+  expected <- paste0("ftp:///", repos)
+  expect_equivalent(res <- normalizeRepositoryPath(repos = repos, 
+      type = "url_ftp"), expected)
+  
+  ## Condition handling //
+  expect_error(normalizeRepositoryPath(repos = repos, 
+      type = "nonexistingtype"))
   
   }
 )

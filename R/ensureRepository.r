@@ -3,8 +3,8 @@
 #' @description 
 #' Ensures existence of an R package repository.
 #' 
-#' @param path \strong{Signature argument}.
-#'    Object containing path information.
+#' @param repos \strong{Signature argument}.
+#'    Object containing repos information.
 #' @param rversion \strong{Signature argument}.
 #'    Object containing version information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
@@ -13,62 +13,130 @@
 #' @export ensureRepository
 setGeneric(name="ensureRepository", 
   signature = c(
-    "path",
+    "repos",
     "rversion"
   ),
   def = function(
-      path=".",
-      rversion=paste(R.version$major, 
-        unlist(strsplit(R.version$minor, split="\\."))[2], sep=".")
+    repos = ".",
+    rversion=paste(R.version$major, 
+      unlist(strsplit(R.version$minor, split="\\."))[2], sep=".")
   ) {
   standardGeneric("ensureRepository")
-})
+  }
+)
 
-#' @param path \code{\link{RappRepositoryS3}}. 
+#' @param repos \code{\link{RappPackageRepositoryS3}}. 
 #' @param rversion \code{\link{character}}. 
 #' @return TODO 
 #' @describeIn ensureRepository
 #' @export
 setMethod(f = "ensureRepository", 
   signature = signature(
-      path = "RappRepositoryS3",
+      repos = "RappPackageRepositoryS3",
       rversion = "character"
   ), 
   definition = function(
-      path,
+      repos,
       rversion
   ) {
-      
-  repos <- expandRepository(path = path, rversion=rversion)
-  sapply(repos, dir.create, recursive=TRUE, showWarnings=FALSE)
-  ensureRepositoryRegistryFiles(repos = repos)
-  out <- TRUE
-  names(out) <- path
+
+  out <- ensureRepository(
+    repos = asExpandedRepository(repos = repos, rversion=rversion)
+  )
+  names(out) <- repos
   out
   
   } 
 )
 
-#' @param path \code{\link{RappRepositoryS3}}. 
+#' @param repos \code{\link{RappPackageRepositoryS3}}. 
 #' @param rversion \code{\link{missing}}. 
 #' @return TODO 
 #' @describeIn ensureRepository
 #' @export
 setMethod(f = "ensureRepository", 
   signature = signature(
-    path = "RappRepositoryS3",
+    repos = "RappPackageRepositoryS3",
     rversion = "missing"
   ), 
   definition = function(
-    path,
+    repos,
     rversion
   ) {
     
-    ensureRepository(
-      path=path,
-      rversion=rversion
-    )
+  ensureRepository(
+    repos = repos,
+    rversion = rversion
+  )
     
+  } 
+)
+
+#' @param repos \code{\link{character}}. 
+#' @param rversion \code{\link{missing}}. 
+#' @return TODO 
+#' @describeIn ensureRepository
+#' @export
+setMethod(f = "ensureRepository", 
+  signature = signature(
+    repos = "character",
+    rversion = "missing"
+  ), 
+  definition = function(
+    repos,
+    rversion
+  ) {
+    
+  ensureRepository(
+    repos = asRepository(repos),
+    rversion = rversion
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{character}}. 
+#' @param rversion \code{\link{character}}. 
+#' @return TODO 
+#' @describeIn ensureRepository
+#' @export
+setMethod(f = "ensureRepository", 
+  signature = signature(
+    repos = "character",
+    rversion = "character"
+  ), 
+  definition = function(
+    repos,
+    rversion
+  ) {
+    
+  ensureRepository(
+    repos = asRepository(repos),
+    rversion = rversion
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{RappExpandedPackageRepositoryS3}}. 
+#' @param rversion \code{\link{ANY}}. 
+#' @return TODO 
+#' @describeIn ensureRepository
+#' @export
+setMethod(f = "ensureRepository", 
+  signature = signature(
+    repos = "RappExpandedPackageRepositoryS3",
+    rversion = "ANY"
+  ), 
+  definition = function(
+    repos,
+    rversion
+  ) {
+    
+  sapply(repos, dir.create, recursive=TRUE, showWarnings=FALSE)
+  ensureRepositoryIndex(repos = repos)
+  TRUE
+  
   } 
 )
 

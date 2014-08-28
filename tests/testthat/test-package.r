@@ -2,17 +2,18 @@ context("package")
 
 test_that("package", {
 
-  path  <- normalizePath(file.path(tempdir(), "repos"), winslash="/")
-  dir.create(path, recursive=TRUE, showWarnings=FALSE)
+  repos  <- normalizePath(file.path(tempdir(), "repos"), winslash="/",
+                         mustWork=FALSE)
+  dir.create(repos, recursive=TRUE, showWarnings=FALSE)
   
   ## As repository //
-  path <- asRepository(path = path)
+  repos <- asRepository(repos = repos)
   
   ## Get scaffold //
-  repos <- expandRepository(path = path)
+  repos <- asExpandedRepository(repos = repos)
   
   ## Ensure existence //
-  ensureRepository(path = path)
+  ensureRepository(repos = repos)
 
   ## Get repository types //
   getRepositoryType(repos = repos)  
@@ -21,17 +22,26 @@ test_that("package", {
   getRepositoryType(repos = repos[3])
    
   ## Get repository path by type //
-  path_win <- getRepositoryPathByType(repos = repos)
+  repos_win <- getRepositoryPathByType(repos = repos)
   
   ## Build directly into repository //
-  build(binary=TRUE, path = path_win)
+  if (FALSE) {
+    require("devtools")
+    build(binary=TRUE, path = repos_win)
+  }
   
   ## Refresh //
-  refreshRepository(repos = repos)
+  refreshRepositoryIndex(repos = repos)
+  
+  ## Set local repository //
+  setLocalPackratRepository(repos = as.character(repos))
+  
+  ## Reset local repository //
+  resetLocalPackratRepository()
   
   on.exit({
-    if (grepl(basename(tempdir()), path)) {
-        unlink(path, recursive=TRUE, force=TRUE)
+    if (grepl(basename(tempdir()), repos)) {
+        unlink(repos, recursive = TRUE, force = TRUE)
     }
   })
   

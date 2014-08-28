@@ -30,11 +30,13 @@ setMethod(f = "getPartialRepositoryScaffold",
   definition = function(
       rversion
   ) {
-      
-  sort(file.path(c(
-    file.path("bin", file.path(c("macosx", "windows"), "contrib")),
-    "src"
-  ), rversion))
+
+  out <- sort(file.path(c(
+    file.path("bin", file.path(c("macosx", "windows"), "contrib", rversion)),
+    file.path("src", "contrib")
+  )))
+  names(out) <- c("mac.binary", "win.binary", "source")
+  out
   
   } 
 )

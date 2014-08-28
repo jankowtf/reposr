@@ -9,6 +9,12 @@
 #' @references \url{http://www.rappster.de/rapp.core.repos}
 #' @export .onLoad
 .onLoad <- function(libname, pkgname) {
-  setOldClass("RappExpandedRepositoryS3")
-  setOldClass("RappRepositoryS3")
+  setOldClass("RappExpandedPackageRepositoryS3")
+  setOldClass("RappPackageRepositoryS3")
+  setOldClass("RappPackageRepositoryGenericS3")
+  setOldClass("RappPackageRepositoryMacBinaryS3")
+  setOldClass("RappPackageRepositoryWinBinaryS3")
+  setOldClass("RappPackageRepositorySourceS3")
+  setOldClass("RappPackageRepositoryListS3")
+  setOldClass("RappParsedPackageRepositoryIndexS3")
 }

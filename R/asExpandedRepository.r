@@ -1,60 +1,234 @@
 #' As Expanded Repository
 #'
 #' @description 
-#' Turns a \code{character} path of a package repository into an object 
-#' of class \code{RappExpandedRepositoryS3}.
+#' Expands actual repository paths and returns an object of class 
+#' \code{\link[rapp.core.repos]{RappExpandedRepositoryS3}}.
 #' 
-#' @param path \strong{Signature argument}.
-#'    Object containing path information.
+#' @param repos \strong{Signature argument}.
+#'    Object containing repos information.
+#' @param ensure \code{logical}.
+#'    Ensure repository existence (\code{TRUE}) or not (\code{FALSE}, default).
+#' @param ... Further arguments passed to:
+#'    \code{\link[rapp.core.repos]{getPartialRepositoryScaffold}},
+#'    \code{\link[rapp.core.repos]{ensureRepository}}..
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
 #' @references \url{http://www.rappster.de/rapp.core.repos}
 #' @example inst/examples/asExpandedRepository.R
 #' @export asExpandedRepository
 setGeneric(name="asExpandedRepository", 
-  signature = c(
-    "path"
-  ),
+  signature = c("repos"),
   def = function(
-      path="."
+    repos = asRepository("."),
+    ensure = FALSE,
+    ...
   ) {
   standardGeneric("asExpandedRepository")
 })
 
-#' @param path \code{\link{character}}.  
-#' @return \code{RappRepositoryS3}. Identical to \code{path} with updated
-#' 		class table. 
+#' @param repos \code{\link{RappPackageRepositoryS3}}. 
+#' @return \code{RappExpandedPackageRepositoryS3}. Object containing all
+#'    repository sublevels with respective class attributes 
+#'    (\code{RappPackageRepositoryMacBinaryS3}, 
+#'    \code{RappPackageRepositoryWinBinaryS3},
+#'    \code{RappPackageRepositorySourceS3}.
 #' @describeIn asExpandedRepository
 #' @export
 setMethod(f = "asExpandedRepository", 
   signature = signature(
-      path = "character"
+    repos = "RappPackageRepositoryS3"
   ), 
   definition = function(
-      path
+    repos,
+    ensure,
+    ...
   ) {
       
-  class(path) <- c("RappExpandedRepositoryS3", class(path))
-  path
+  if (ensure) {
+    ensureRepository(repos = repos, ...) 
+    ## ...: 'rversion'
+  }    
+    
+  ## Expand paths //
+  out <- getExpandedRepositoryPaths(repos = repos, ...)
+  
+  for (ii in names(out)) {
+    out[[ii]] <- addClassAttribute(
+      out[[ii]], 
+      class_name = switch(ii,
+        "mac.binary" = "RappPackageRepositoryMacBinaryS3",
+        "source" = "RappPackageRepositorySourceS3",
+        "win.binary" = "RappPackageRepositoryWinBinaryS3"
+      )
+    )
+  }
+  
+  out <- addClassAttribute(obj = out, 
+    class_name = "RappExpandedPackageRepositoryS3")
+  out[sort(names(out))]
   
   } 
 )
 
-#' @param path \code{\link{missing}}.  
-#' @return See signature \code{character}.
+#' @param repos \code{\link{missing}}. 
 #' @describeIn asExpandedRepository
 #' @export
 setMethod(f = "asExpandedRepository", 
   signature = signature(
-    path = "missing"
+    repos = "missing"
   ), 
   definition = function(
-    path
+    repos,
+    ensure,
+    ...
   ) {
     
-    asExpandedRepository(
-      path = path
-    )
+  asExpandedRepository(
+    repos = repos,
+    ensure = ensure,
+    ...
+  )
     
   } 
 )
 
+#' @param repos \code{\link{character}}. 
+#' @return TODO 
+#' @describeIn asExpandedRepository
+#' @export
+setMethod(f = "asExpandedRepository", 
+  signature = signature(
+    repos = "character"
+  ), 
+  definition = function(
+    repos,
+    ensure, 
+    ...
+  ) {
+    
+  asExpandedRepository(
+    repos = asRepository(repos = repos),
+    ensure = ensure,
+    ...
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{RappExpandedPackageRepositoryS3}}. 
+#' @return TODO 
+#' @describeIn asExpandedRepository
+#' @export
+setMethod(f = "asExpandedRepository", 
+  signature = signature(
+    repos = "RappExpandedPackageRepositoryS3"
+  ), 
+  definition = function(
+    repos,
+    ensure, 
+    ...
+  ) {
+    
+  if (ensure) {
+    ensureRepository(repos = repos, ...)
+    ## ...: 'rversion'
+  }    
+  repos
+    
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositoryGenericS3}}. 
+#' @return TODO 
+#' @describeIn asExpandedRepository
+#' @export
+setMethod(f = "asExpandedRepository", 
+  signature = signature(
+    repos = "RappPackageRepositoryGenericS3"
+  ), 
+  definition = function(
+    repos,
+    ensure, 
+    ...
+  ) {
+   
+  ## Dispatch to 'repos:RappPackageRepositoryS3' //
+  asExpandedRepository(
+    repos = getRepositoryRoot(repos = repos),
+    ensure = ensure,
+    ...
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositoryMacBinaryS3}}. 
+#' @return TODO 
+#' @describeIn asExpandedRepository
+#' @export
+setMethod(f = "asExpandedRepository", 
+  signature = signature(
+    repos = "RappPackageRepositoryMacBinaryS3"
+  ), 
+  definition = function(
+    repos,
+    ensure, 
+    ...
+  ) {
+   
+  ## Dispatch to 'repos:RappPackageRepositoryS3' //
+  asExpandedRepository(
+    repos = getRepositoryRoot(repos = repos),
+    ensure = ensure,
+    ...
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositoryWinBinaryS3}}. 
+#' @return TODO 
+#' @describeIn asExpandedRepository
+#' @export
+setMethod(f = "asExpandedRepository", 
+  signature = signature(
+    repos = "RappPackageRepositoryWinBinaryS3"
+  ), 
+  definition = function(
+    repos,
+    ensure, 
+    ...
+  ) {
+   
+  ## Dispatch to 'repos:RappPackageRepositoryS3' //
+  asExpandedRepository(
+    repos = getRepositoryRoot(repos = repos),
+    ensure = ensure,
+    ...
+  )
+    
+  } 
+)
+
+#' @param repos \code{\link{RappPackageRepositorySourceS3}}. 
+#' @return TODO 
+#' @describeIn asExpandedRepository
+#' @export
+setMethod(f = "asExpandedRepository", 
+  signature = signature(
+    repos = "RappPackageRepositorySourceS3"
+  ), 
+  definition = function(
+    repos,
+    ensure, 
+    ...
+  ) {
+   
+  ## Dispatch to 'repos:RappPackageRepositoryS3' //
+  asExpandedRepository(
+    repos = getRepositoryRoot(repos = repos),
+    ensure = ensure,
+    ...
+  )
+    
+  } 
+)
