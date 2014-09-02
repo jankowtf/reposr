@@ -252,3 +252,4 @@ setMethod(f = "getPackageBuildFilePatterns",
   
   } 
 )
+

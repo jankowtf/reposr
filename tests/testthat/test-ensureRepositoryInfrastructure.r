@@ -19,7 +19,7 @@ test_that("ensureRepositoryInfrastructure", {
   expect_true(length(res) == 1)
   expect_true(all(res <- ensureRepositoryInfrastructure(
     repos_home = repos_home, pkg_name = "test", pkg_version = "1.0")))
-  expect_true(length(res) == 1)
+  expect_true(length(res) == 2)
   
   on.exit(
   {

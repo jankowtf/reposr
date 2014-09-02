@@ -1,8 +1,8 @@
-packrat/lib
-packrat/lib-ext
-packrat/lib-R
-packrat/src
-.dll
-.Rproj.user
-.Rhistory
+*.dll
 packrat/lib*/
+packrat/src
+*.Rhistory
+*.Rproj.user
+.*so
+.*o
+

@@ -59,3 +59,4 @@ setMethod(f = "getPartialRepositoryScaffold",
     
   } 
 )
+

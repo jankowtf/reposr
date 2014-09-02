@@ -13,7 +13,7 @@ test_that("buildIntoRepositoryInfrastructure", {
   expect_true(length(res) == 2)
   expect_true(all(res <- buildIntoRepositoryInfrastructure(
     repos_home = repos_home, pkg_name = character(), pkg_version = character())))
-  expect_true(length(res) == 1)
+  expect_true(length(res) == 2)
   
   on.exit(
   {

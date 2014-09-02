@@ -40,7 +40,7 @@ test_that("package", {
   resetLocalPackratRepository()
   
   on.exit({
-    if (grepl(basename(tempdir()), repos)) {
+    if (any(grepl(basename(tempdir()), repos))) {
         unlink(repos, recursive = TRUE, force = TRUE)
     }
   })
