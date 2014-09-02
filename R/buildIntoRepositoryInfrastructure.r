@@ -133,7 +133,10 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
           })
           
         }
-        refreshRepositoryIndex(repos = repos, remove_old = remove_old)
+        refreshRepositoryIndex(repos = repos) 
+        if (remove_old) {
+          removeOldRepositoryPackages(repos = repos, ...)
+        }
         TRUE
       },
       error = function(cond) {
