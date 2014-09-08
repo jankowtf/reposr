@@ -22,8 +22,6 @@ test_that("ensureRepository", {
   
   on.exit(.cleanTempDir(x = repos_0))
   
-  on.exit(.cleanTempDir(x = repos_0))
-  
   }
 )
 
