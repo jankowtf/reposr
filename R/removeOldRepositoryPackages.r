@@ -102,6 +102,7 @@ setMethod(f = "removeOldRepositoryPackages",
 #' @return TODO 
 #' @describeIn removeOldRepositoryPackages
 #' @export
+#' @import rapp.core.condition
 setMethod(f = "removeOldRepositoryPackages", 
   signature = signature(
     repos = "RappPackageRepositoryGenericS3"
@@ -116,7 +117,7 @@ setMethod(f = "removeOldRepositoryPackages",
   pattern <- unlist(pattern)
   
   if (!file.exists(getRepositoryRoot(repos = repos))) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidPackageRepositoryLocation",
       msg = c(
         "Package repository directory does not exist",

@@ -22,6 +22,7 @@ setGeneric(name = "parseRepositoryIndexFile",
 #' @param path  \code{\link{missing}}. 
 #' @describeIn parseRepositoryIndexFile
 #' @export
+#' @import rapp.core.condition
 setMethod(f="parseRepositoryIndexFile", 
   signature=signature(
     path = "missing"
@@ -49,7 +50,7 @@ setMethod(f = "parseRepositoryIndexFile",
   ) {
       
   if (!file.exists(path)) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidPathToPackagesIndexFile",
       msg = c(
         "Unable to find index file 'PACKAGES'",

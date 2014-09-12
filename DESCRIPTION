@@ -1,8 +1,8 @@
 Package: rapp.core.repos
 Type: Package
 Title: Enhanced package repository processing
-Version: 0.1.0.7
-Date: 2014-09-02
+Version: 0.1.0.8
+Date: 2014-09-11
 Author: Janko Thyson [aut, cre]
 Maintainer: Janko Thyson <janko.thyson@gmail.com>
 Description: Functionality in order to ensure and maintain package repositories

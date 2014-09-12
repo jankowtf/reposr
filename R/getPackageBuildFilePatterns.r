@@ -144,6 +144,7 @@ setMethod(f = "getPackageBuildFilePatterns",
 #' @return TODO 
 #' @describeIn getPackageBuildFilePatterns
 #' @export
+#' @import rapp.core.condition
 setMethod(f = "getPackageBuildFilePatterns", 
   signature = signature(
     input = "RappPackageRepositoryGenericS3"
@@ -155,7 +156,7 @@ setMethod(f = "getPackageBuildFilePatterns",
   
   
   if (!file.exists(getRepositoryRoot(repos = input))) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidPackageRepositoryLocation",
       msg = c(
         "Package repository directory does not exist",

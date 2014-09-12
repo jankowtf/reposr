@@ -36,8 +36,9 @@ setGeneric(name="buildIntoRepositoryInfrastructure",
 #' @param repos_home \code{\link{character}}. 
 #' @return TODO 
 #' @describeIn buildIntoRepositoryInfrastructure
-#' @import rapp.core.description
 #' @export
+#' @import rapp.core.condition
+#' @import rapp.core.description
 setMethod(f = "buildIntoRepositoryInfrastructure", 
   signature = signature(
     repos_home = "character"
@@ -50,7 +51,7 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
   ) {
     
   if (!file.exists("DESCRIPTION")) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidUsageContext",
       msg = c(
         "Method is used in invalid context",
@@ -99,7 +100,7 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
         } else {
         ## Copy cached //
           if (!length(ls(.buffer))) {
-            signalCondition(
+            rapp.core.condition::signalCondition(
               condition = "EmtpyBufferObject",
               msg = c(
                 "Buffer object is empty",
@@ -119,7 +120,7 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
             )          
             res <- file.copy(from = from, to = to, overwrite = TRUE)
             if (!res) {
-              signalCondition(
+              rapp.core.condition::signalCondition(
                 condition = "BuildCopyFailed",
                 msg = c(
                   "Unable to copy package build",

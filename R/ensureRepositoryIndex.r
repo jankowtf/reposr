@@ -87,6 +87,7 @@ setMethod(f = "ensureRepositoryIndex",
 #' @param repos \code{\link{RappPackageRepositoryGenericS3}}. 
 #' @describeIn ensureRepositoryIndex
 #' @export
+#' @import rapp.core.condition
 setMethod(f = "ensureRepositoryIndex", 
   signature = signature(
     repos = "RappPackageRepositoryGenericS3"
@@ -100,7 +101,7 @@ setMethod(f = "ensureRepositoryIndex",
   type <- match.arg(type, c("mac.binary", "source", "win.binary"))    
   
   if (!file.exists(getRepositoryRoot(repos = repos))) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidPackageRepositoryLocation",
       msg = c(
         "Package repository directory does not exist",

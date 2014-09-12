@@ -72,6 +72,7 @@ setMethod(f = "getRepositoryRoot",
 #' @param repos \code{\link{RappExpandedPackageRepositoryS3}}.  
 #' @describeIn getRepositoryRoot
 #' @export
+#' @import rapp.core.condition
 setMethod(f = "getRepositoryRoot", 
   signature = signature(
     repos = "RappExpandedPackageRepositoryS3"
@@ -82,7 +83,7 @@ setMethod(f = "getRepositoryRoot",
   
   tmp <- unique(sapply(repos, getRepositoryRoot))
   if (length(tmp) > 1) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "Ambiguous package repository structure",
       msg = c(
         "Unable to identify unambiguous root repository",

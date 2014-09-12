@@ -28,6 +28,7 @@ setGeneric(name="asExpandedRepository",
 #' 		class table. 
 #' @describeIn asExpandedRepository
 #' @export
+#' @import rapp.core.condition
 setMethod(f = "asExpandedRepository", 
   signature = signature(
     repos = "character"
@@ -38,7 +39,7 @@ setMethod(f = "asExpandedRepository",
   ) {
   
   if (!length(repos)) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidRepositoryPath",
       msg = c(
         "Invalid repository path: empty character string"
@@ -47,7 +48,7 @@ setMethod(f = "asExpandedRepository",
     )
   }    
   if (length(repos) > 1) {
-    signalCondition(
+    rapp.core.condition::signalCondition(
       condition = "InvalidRepositoryPath",
       msg = c(
         "Invalid repository path: length > 1"

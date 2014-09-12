@@ -59,7 +59,7 @@ setMethod(f = "setLocalPackratRepository",
   ) {
     
   #   if (!"packrat" %in% .packages()) {
-#     signalCondition(
+#     rapp.core.condition::signalCondition(
 #       condition = "PackratPackageNotLoaded",
 #       type = "error"
 #     )
