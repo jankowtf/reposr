@@ -1,3 +1,19 @@
+# CHANGES IN VERSION 0.1.4
+
+## NEW FEATURES
+
+## BUG FIXES
+
+## MAJOR CHANGES
+
+## MINOR CHANGES
+
+## MISC
+
+- cleanup in order to use git-flow paradigm
+
+-----
+
 # CHANGES IN VERSION 0.1.3
 
 ## NEW FEATURES

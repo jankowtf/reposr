@@ -13,4 +13,7 @@ License: GPL (>= 2)
 Roxygen: list(wrap = FALSE)
 NeedsCompilation: no
 Repository: CRAN
-Imports: conditionr, descriptionr
+Imports: 
+  conditionr, 
+  descriptionr,
+  devtools
