@@ -8,7 +8,7 @@
 #' @param rversion \strong{Signature argument}.
 #'    Object containing version information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/ensureRepository.R
 #' @export ensureRepository
 setGeneric(name="ensureRepository", 
@@ -88,7 +88,7 @@ setMethod(f = "ensureRepository",
   ) {
     
   ensureRepository(
-    repos = asRepository(repos),
+    repos = asRepository(repos, type = "fs"),
     rversion = rversion
   )
     
@@ -111,7 +111,7 @@ setMethod(f = "ensureRepository",
   ) {
     
   ensureRepository(
-    repos = asRepository(repos),
+    repos = asRepository(repos, type = "fs"),
     rversion = rversion
   )
     

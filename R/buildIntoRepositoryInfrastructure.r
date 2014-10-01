@@ -7,7 +7,7 @@
 #'
 #' @description 
 #' Build into repository infrastructure as ensured by 
-#' \code{\link[rapp.core.repos]{ensureRepositoryInfrastructure}}.
+#' \code{\link[repositr]{ensureRepositoryInfrastructure}}.
 #' 
 #' @param repos_home \strong{Signature argument}.
 #'    Object containing information about the repository parent location.
@@ -17,7 +17,7 @@
 #' @param remove_old \code{\link{logical}}.
 #'    Remove old content (\code{TRUE}) or not (\code{FALSE} (default)).
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/buildIntoRepositoryInfrastructure.R
 #' @export buildIntoRepositoryInfrastructure
 setGeneric(name="buildIntoRepositoryInfrastructure", 
@@ -37,8 +37,9 @@ setGeneric(name="buildIntoRepositoryInfrastructure",
 #' @return TODO 
 #' @describeIn buildIntoRepositoryInfrastructure
 #' @export
-#' @import rapp.core.condition
-#' @import rapp.core.description
+#' @import conditionr
+#' @import descriptionr
+#' @import devtools
 setMethod(f = "buildIntoRepositoryInfrastructure", 
   signature = signature(
     repos_home = "character"
@@ -51,7 +52,7 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
   ) {
     
   if (!file.exists("DESCRIPTION")) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidUsageContext",
       msg = c(
         "Method is used in invalid context",
@@ -61,8 +62,8 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
     )
   }
   
-  pkg_name <- rapp.core.description::getPackageName()
-  pkg_version <- rapp.core.description::getPackageVersion()
+  pkg_name <- descriptionr::getPackageName()
+  pkg_version <- descriptionr::getPackageVersion()
   
   ## Ensure repository infrastructure //
   ensureRepositoryInfrastructure(repos_home = repos_home)
@@ -74,33 +75,35 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
     pkg_version = pkg_version
   )
   
+  wd <- getwd()
   .buffer <- new.env()
 #   ii=1
   out <- sapply(seq(along = repos_list), function(ii) {
     repos <- repos_list[[ii]]
     pkg_type <- getOption("pkgType")
-    repos_path_bin <- unlist(getRepositoryPathByType(repos = repos, type = pkg_type))
-    repos_path_source <- unlist(getRepositoryPathByType(repos = repos, type = "source"))
+    repos_path_bin <- unlist(getRepositoryPathByType(repos = repos, 
+      type = pkg_type))
+    repos_path_source <- unlist(getRepositoryPathByType(repos = repos, 
+      type = "source"))
     tryCatch(
       {
         if (ii == 1) {
         ## Build and cache //
-          
-          devtools::document()
+          devtools::document(pkg = wd)
           
           ## Binary //
           if (binary) {
-            tmp <- devtools::build(path = repos_path_bin, binary = TRUE)
+            tmp <- devtools::build(pkg = wd, path = repos_path_bin, binary = TRUE)
             assign(pkg_type, tmp, envir = .buffer)
           }
           
           ## Source //
-          tmp <- devtools::build(path = repos_path_source)
+          tmp <- devtools::build(pkg = wd, path = repos_path_source)
           .buffer$source <- tmp
         } else {
         ## Copy cached //
           if (!length(ls(.buffer))) {
-            rapp.core.condition::signalCondition(
+            conditionr::signalCondition(
               condition = "EmtpyBufferObject",
               msg = c(
                 "Buffer object is empty",
@@ -120,7 +123,7 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
             )          
             res <- file.copy(from = from, to = to, overwrite = TRUE)
             if (!res) {
-              rapp.core.condition::signalCondition(
+              conditionr::signalCondition(
                 condition = "BuildCopyFailed",
                 msg = c(
                   "Unable to copy package build",
@@ -132,7 +135,6 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
             }
             NULL
           })
-          
         }
         refreshRepositoryIndex(repos = repos) 
         if (remove_old) {
@@ -151,8 +153,9 @@ setMethod(f = "buildIntoRepositoryInfrastructure",
     )
   })
   names(out) <- repos_list
-  out
   
+  return(out)
+
   } 
 )
 

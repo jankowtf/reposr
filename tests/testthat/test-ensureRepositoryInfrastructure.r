@@ -1,4 +1,4 @@
-context("package")
+context("ensureRepositoryInfrastructure-A")
 
 test_that("ensureRepositoryInfrastructure", {
 

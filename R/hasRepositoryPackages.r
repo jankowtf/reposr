@@ -8,10 +8,10 @@
 #' @param repos \strong{Signature argument}.
 #' 		Object containing repository information.
 #' @param further arguments passed to:
-#' 		\code{\link[rapp.core.repos]{asRepository}},
-#' 		\code{\link[rapp.core.repos]{asExpandedRepository}}.
+#' 		\code{\link[repositr]{asRepository}},
+#' 		\code{\link[repositr]{asExpandedRepository}}.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/hasRepositoryPackages.R
 #' @export 
 setGeneric(name = "hasRepositoryPackages", 

@@ -1,4 +1,4 @@
-context("package")
+context("removeOldRepositoryPackages-A")
 
 test_that("removeOldRepositoryPackages", {
 

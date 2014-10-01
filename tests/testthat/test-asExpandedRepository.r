@@ -1,4 +1,4 @@
-context("package")
+context("asExpandedRepository-A")
 
 test_that("asExpandedRepository", {
 

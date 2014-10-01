@@ -2,17 +2,20 @@
 #'
 #' @description 
 #' Expands actual repository paths and returns an object of class 
-#' \code{\link[rapp.core.repos]{RappExpandedRepositoryS3}}.
+#' \code{\link[repositr]{RappExpandedRepositoryS3}}.
 #' 
 #' @param repos \strong{Signature argument}.
 #'    Object containing repos information.
 #' @param ensure \code{logical}.
 #'    Ensure repository existence (\code{TRUE}) or not (\code{FALSE}, default).
+#' @param type \code{\link{character}}.
+#'    Path type. One of \code{ c("fs", "url_file", "url_http", "url_ftp")}.
+#'    See \code{\link[repositr]{normalizeRepositoryPath}}.
 #' @param ... Further arguments passed to:
-#'    \code{\link[rapp.core.repos]{getPartialRepositoryScaffold}},
-#'    \code{\link[rapp.core.repos]{ensureRepository}}..
+#'    \code{\link[repositr]{getPartialRepositoryScaffold}},
+#'    \code{\link[repositr]{ensureRepository}}..
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/asExpandedRepository.R
 #' @export asExpandedRepository
 setGeneric(name="asExpandedRepository", 
@@ -20,6 +23,7 @@ setGeneric(name="asExpandedRepository",
   def = function(
     repos = asRepository("."),
     ensure = FALSE,
+    type =  c("fs", "url_file", "url_http", "url_ftp"),
     ...
   ) {
   standardGeneric("asExpandedRepository")
@@ -40,6 +44,7 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
       
@@ -49,7 +54,7 @@ setMethod(f = "asExpandedRepository",
   }    
     
   ## Expand paths //
-  out <- getExpandedRepositoryPaths(repos = repos, ...)
+  out <- getExpandedRepositoryPaths(repos = repos, type = type, ...)
   
   for (ii in names(out)) {
     out[[ii]] <- addClassAttribute(
@@ -79,12 +84,14 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
     
   asExpandedRepository(
     repos = repos,
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -102,12 +109,15 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure, 
+    type,
     ...
   ) {
     
+#   repos <- normalizeRepositoryPath(repos = repos, type = "fs")        
   asExpandedRepository(
-    repos = asRepository(repos = repos),
+    repos = asRepository(repos = repos, type = type),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -125,6 +135,7 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure, 
+    type,
     ...
   ) {
     
@@ -132,6 +143,9 @@ setMethod(f = "asExpandedRepository",
     ensureRepository(repos = repos, ...)
     ## ...: 'rversion'
   }    
+  for (ii in seq(along = repos)) {
+    repos[[ii]] <- normalizeRepositoryPath(repos = unclass(repos[[ii]]), type = type)
+  }
   repos
     
   } 
@@ -148,6 +162,7 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure, 
+    type,
     ...
   ) {
    
@@ -155,6 +170,7 @@ setMethod(f = "asExpandedRepository",
   asExpandedRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -172,6 +188,7 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure, 
+    type,
     ...
   ) {
    
@@ -179,6 +196,7 @@ setMethod(f = "asExpandedRepository",
   asExpandedRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -196,6 +214,7 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure, 
+    type,
     ...
   ) {
    
@@ -203,6 +222,7 @@ setMethod(f = "asExpandedRepository",
   asExpandedRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -220,6 +240,7 @@ setMethod(f = "asExpandedRepository",
   definition = function(
     repos,
     ensure, 
+    type,
     ...
   ) {
    
@@ -227,6 +248,7 @@ setMethod(f = "asExpandedRepository",
   asExpandedRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type,
     ...
   )
     

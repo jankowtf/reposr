@@ -5,10 +5,13 @@
 #' 
 #' @param repos \strong{Signature argument}.
 #'    Object containing repos information.
+#' @param type \code{\link{character}}.
+#'    Path type. One of \code{ c("fs", "url_file", "url_http", "url_ftp")}.
+#'    See \code{\link[repositr]{normalizeRepositoryPath}}.
 #' @param ... Further arguments passed to:
-#'    \code{\link[rapp.core.repos]{getPartialRepositoryScaffold}}.
+#'    \code{\link[repositr]{getPartialRepositoryScaffold}}.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/getExpandedRepositoryPaths.R
 #' @seealso \code{\link[rapp2]{getExpandedRepositoryPaths-character-method}}
 #' @export getExpandedRepositoryPaths
@@ -16,6 +19,7 @@ setGeneric(name="getExpandedRepositoryPaths",
   signature = c("repos"),
   def = function(
     repos = asRepository("."),
+    type =  c("fs", "url_file", "url_http", "url_ftp"),
     ...
   ) {
   standardGeneric("getExpandedRepositoryPaths")
@@ -32,12 +36,14 @@ setMethod(f = "getExpandedRepositoryPaths",
   ), 
   definition = function(
     repos,
+    type,
     ...
   ) {
       
   partial <- getPartialRepositoryScaffold(...)
   ## ...: 'rversion'
   
+  repos <- normalizeRepositoryPath(repos = repos, type = type)
   out <- as.list(file.path(repos, partial))
   names(out) <- names(partial)
   
@@ -65,11 +71,13 @@ setMethod(f = "getExpandedRepositoryPaths",
   ), 
   definition = function(
     repos,
+    type,
     ...
   ) {
     
   getExpandedRepositoryPaths(
     repos=repos,
+    type,
     ...
   )
     
@@ -86,11 +94,13 @@ setMethod(f = "getExpandedRepositoryPaths",
   ), 
   definition = function(
     repos,
+    type,
     ...
   ) {
     
   getExpandedRepositoryPaths(
     repos = asRepository(repos = repos),
+    type = type,
     ...
   )
     

@@ -10,9 +10,9 @@
 #'    "source", "win.binary")}. If missing, \strong{all} package types are 
 #'    considered.
 #' @param ... Further arguments passed to:
-#'    \code{\link[rapp.core.repos]{asExpandedRepository}}.
+#'    \code{\link[repositr]{asExpandedRepository}}.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/removeOldRepositoryPackages.R
 #' @export removeOldRepositoryPackages
 setGeneric(name="removeOldRepositoryPackages", 
@@ -102,7 +102,7 @@ setMethod(f = "removeOldRepositoryPackages",
 #' @return TODO 
 #' @describeIn removeOldRepositoryPackages
 #' @export
-#' @import rapp.core.condition
+#' @import conditionr
 setMethod(f = "removeOldRepositoryPackages", 
   signature = signature(
     repos = "RappPackageRepositoryGenericS3"
@@ -117,7 +117,7 @@ setMethod(f = "removeOldRepositoryPackages",
   pattern <- unlist(pattern)
   
   if (!file.exists(getRepositoryRoot(repos = repos))) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidPackageRepositoryLocation",
       msg = c(
         "Package repository directory does not exist",

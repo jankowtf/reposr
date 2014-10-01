@@ -1,4 +1,4 @@
-context("package")
+context("getPackageBuildFilePatterns-A")
 
 test_that("getPackageBuildFilePatterns", {
 

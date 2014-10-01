@@ -10,7 +10,7 @@
 #'    \code{packrat::get_opts("local.repos")} (\code{TRUE}, default) or overwrite 
 #'    existing content (\code{FALSE})
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/setLocalPackratRepository.R
 #' @export setLocalPackratRepository
 setGeneric(name="setLocalPackratRepository", 
@@ -59,7 +59,7 @@ setMethod(f = "setLocalPackratRepository",
   ) {
     
   #   if (!"packrat" %in% .packages()) {
-#     rapp.core.condition::signalCondition(
+#     conditionr::signalCondition(
 #       condition = "PackratPackageNotLoaded",
 #       type = "error"
 #     )

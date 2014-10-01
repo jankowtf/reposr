@@ -1,4 +1,4 @@
-context("package")
+context("getRepositoryType-A")
 
 test_that("getRepositoryType", {
 

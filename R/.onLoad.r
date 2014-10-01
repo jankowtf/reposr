@@ -6,7 +6,7 @@
 #' @param libname 
 #' @param pkgname
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @export .onLoad
 .onLoad <- function(libname, pkgname) {
   setOldClass("RappExpandedPackageRepositoryS3")

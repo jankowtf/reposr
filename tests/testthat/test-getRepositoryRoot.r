@@ -1,4 +1,4 @@
-context("package")
+context("getRepositoryRoot-A")
 
 test_that("getRepositoryRoot", {
 
@@ -8,11 +8,11 @@ test_that("getRepositoryRoot", {
     }
   }
   
-  repos  <- file.path(tempdir(), "repos")
+  repos  <- gsub("\\\\", "/", file.path(tempdir(), "repos"))
   repos_0 <- repos
   
   ## Missing //
-  expected <- addClassAttribute(obj = ".", 
+  expected <- addClassAttribute(obj = normalizePath(".", winslash = "/"), 
     class_name = "RappPackageRepositoryS3")
   expect_equal(res <- getRepositoryRoot(), expected)
   

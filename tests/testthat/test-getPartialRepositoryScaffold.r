@@ -1,4 +1,4 @@
-context("package")
+context("getPartialRepositoryScaffold-A")
 
 test_that("getPartialRepositoryScaffold", {
 

@@ -1,4 +1,4 @@
-context("package")
+context("normalizeRepositoryPath-A")
 
 test_that("normalizeRepositoryPath", {
 

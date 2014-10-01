@@ -6,7 +6,7 @@
 #' @param path \strong{Signature argument}.
 #' 		Object containing source information for parsing.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/parseRepositoryIndexFile.R
 #' @export 
 setGeneric(name = "parseRepositoryIndexFile", 
@@ -22,7 +22,7 @@ setGeneric(name = "parseRepositoryIndexFile",
 #' @param path  \code{\link{missing}}. 
 #' @describeIn parseRepositoryIndexFile
 #' @export
-#' @import rapp.core.condition
+#' @import conditionr
 setMethod(f="parseRepositoryIndexFile", 
   signature=signature(
     path = "missing"
@@ -50,7 +50,7 @@ setMethod(f = "parseRepositoryIndexFile",
   ) {
       
   if (!file.exists(path)) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidPathToPackagesIndexFile",
       msg = c(
         "Unable to find index file 'PACKAGES'",

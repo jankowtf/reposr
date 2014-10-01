@@ -9,7 +9,7 @@
 #' @param ensure \code{logical}.
 #'    Ensure existence (\code{TRUE}) or not (\code{FALSE}, default).
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/asExpandedRepository.R
 #' @export asExpandedRepository
 setGeneric(name="asExpandedRepository", 
@@ -28,7 +28,7 @@ setGeneric(name="asExpandedRepository",
 #' 		class table. 
 #' @describeIn asExpandedRepository
 #' @export
-#' @import rapp.core.condition
+#' @import conditionr
 setMethod(f = "asExpandedRepository", 
   signature = signature(
     repos = "character"
@@ -39,7 +39,7 @@ setMethod(f = "asExpandedRepository",
   ) {
   
   if (!length(repos)) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidRepositoryPath",
       msg = c(
         "Invalid repository path: empty character string"
@@ -48,7 +48,7 @@ setMethod(f = "asExpandedRepository",
     )
   }    
   if (length(repos) > 1) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidRepositoryPath",
       msg = c(
         "Invalid repository path: length > 1"

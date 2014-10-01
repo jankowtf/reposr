@@ -8,7 +8,7 @@
 #' @param type \strong{Signature argument}.
 #'    Object containing normalization type information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/normalizeRepositoryPath.R
 #' @export normalizeRepositoryPath
 setGeneric(name="normalizeRepositoryPath", 

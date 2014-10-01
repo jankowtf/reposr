@@ -1,4 +1,4 @@
-context("package")
+context("getRepositoryPathByType-A")
 
 test_that("getRepositoryPathByType", {
 

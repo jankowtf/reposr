@@ -6,10 +6,10 @@
 #' @param input \strong{Signature argument}.
 #' 		Object containing source input for parsing.
 #' @param ... Further arguments passed to:
-#' 		\code{\link[rapp.core.repos]{asExpandedRepository}},
-#' 		\code{\link[rapp.core.repos]{hasRepositoryPackages}}.
+#' 		\code{\link[repositr]{asExpandedRepository}},
+#' 		\code{\link[repositr]{hasRepositoryPackages}}.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/getPackageBuildFilePatterns.R
 #' @export
 setGeneric(name = "getPackageBuildFilePatterns", 
@@ -83,8 +83,8 @@ setMethod(f = "getPackageBuildFilePatterns",
 #   names(out) <- c("mac.binary", "source", "win.binary")
 #   out   
   out <- paste0(raw_vec, "\\.\\w.*$")
-#   x <- c("rapp.core.repos_0.1.0.1.zip", "rapp.core.b_0.1.0.1.zip", 
-#          "rapp.core.repos_0.1.0.2.zip", "rapp.core.b_0.1.0.1.1.zip")
+#   x <- c("repositr_0.1.0.1.zip", "rapp.core.b_0.1.0.1.zip", 
+#          "repositr_0.1.0.2.zip", "rapp.core.b_0.1.0.1.1.zip")
 #   grep(out[2], x)
   out
 
@@ -144,7 +144,7 @@ setMethod(f = "getPackageBuildFilePatterns",
 #' @return TODO 
 #' @describeIn getPackageBuildFilePatterns
 #' @export
-#' @import rapp.core.condition
+#' @import conditionr
 setMethod(f = "getPackageBuildFilePatterns", 
   signature = signature(
     input = "RappPackageRepositoryGenericS3"
@@ -156,7 +156,7 @@ setMethod(f = "getPackageBuildFilePatterns",
   
   
   if (!file.exists(getRepositoryRoot(repos = input))) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidPackageRepositoryLocation",
       msg = c(
         "Package repository directory does not exist",

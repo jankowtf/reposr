@@ -10,9 +10,9 @@
 #' @param pkg_version \strong{Signature argument}.
 #'    Object containing package version information.
 #' @param ... Further arguments passed to 
-#'    \code{\link[rapp.core.repos]{ensureRepository}}.
+#'    \code{\link[repositr]{ensureRepository}}.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/ensureRepositoryInfrastructure.R
 #' @export ensureRepositoryInfrastructure
 setGeneric(name="ensureRepositoryInfrastructure", 
@@ -35,7 +35,7 @@ setGeneric(name="ensureRepositoryInfrastructure",
 #' @param pkg_version \code{\link{missing}}. 
 #' @return TODO 
 #' @describeIn ensureRepositoryInfrastructure
-#' @import rapp.core.description
+#' @import descriptionr
 #' @export
 setMethod(f = "ensureRepositoryInfrastructure", 
   signature = signature(
@@ -75,7 +75,7 @@ setMethod(f = "ensureRepositoryInfrastructure",
 #' @param pkg_version \code{\link{character}}. 
 #' @return TODO 
 #' @describeIn ensureRepositoryInfrastructure
-#' @import rapp.core.description
+#' @import descriptionr
 #' @export
 setMethod(f = "ensureRepositoryInfrastructure", 
   signature = signature(

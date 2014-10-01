@@ -8,11 +8,17 @@
 #'    Object containing repos information.
 #' @param ensure \code{logical}.
 #'    Ensure repository existence (\code{TRUE}) or not (\code{FALSE}, default).
+#' @param type \code{\link{character}}.
+#'    Path type. One of \code{ c("fs", "url_file", "url_http", "url_ftp")}.
+#'    See \code{\link[repositr]{normalizeRepositoryPath}}.
 #' @param ... Further arguments passed to:
-#'    \code{\link[rapp.core.repos]{ensureRepository}}.
+#'    \code{\link[repositr]{ensureRepository}}.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/asRepository.R
+#' @seealso \code{
+#'    \link[repositr]{normalizeRepositoryPath}
+#' }
 #' @export asRepository
 setGeneric(name="asRepository", 
   signature = c(
@@ -21,6 +27,7 @@ setGeneric(name="asRepository",
   def = function(
     repos = ".",
     ensure = FALSE,
+    type =  c("fs", "url_file", "url_http", "url_ftp"),
     ...
   ) {
   standardGeneric("asRepository")
@@ -38,13 +45,16 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type, 
     ...
   ) {
     
+  repos <- normalizeRepositoryPath(repos = repos, type = type)        
   return(asRepository(
     repos = addClassAttribute(obj = repos, 
       class_name = "RappPackageRepositoryS3"),
     ensure = ensure,
+    type = type,
     ...
   ))
   
@@ -61,12 +71,14 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
     
   return(asRepository(
     repos = repos,
     ensure = ensure,
+    type = type,
     ...
   ))
     
@@ -83,6 +95,7 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
   
@@ -90,6 +103,8 @@ setMethod(f = "asRepository",
     ensureRepository(repos = repos, ...)
     ## ...: 'rversion'
   }    
+  tmp <- normalizeRepositoryPath(repos = unclass(repos), type = type, ...)
+  repos[1:length(repos)] <- tmp
   repos
     
   } 
@@ -105,6 +120,7 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
   
@@ -118,6 +134,7 @@ setMethod(f = "asRepository",
   asRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -134,6 +151,7 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
   
@@ -141,6 +159,7 @@ setMethod(f = "asRepository",
   asRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -157,6 +176,7 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
   
@@ -164,6 +184,7 @@ setMethod(f = "asRepository",
   asRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -180,6 +201,7 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type,
     ...
   ) {
   
@@ -187,6 +209,7 @@ setMethod(f = "asRepository",
   asRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     
@@ -203,6 +226,7 @@ setMethod(f = "asRepository",
   definition = function(
     repos,
     ensure,
+    type, 
     ...
   ) {
   
@@ -210,6 +234,7 @@ setMethod(f = "asRepository",
   asRepository(
     repos = getRepositoryRoot(repos = repos),
     ensure = ensure,
+    type = type,
     ...
   )
     

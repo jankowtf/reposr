@@ -1,4 +1,4 @@
-context("package")
+context("hasRepositoryPackages-A")
 
 test_that("hasRepositoryPackages", {
 

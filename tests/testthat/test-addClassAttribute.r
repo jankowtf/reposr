@@ -1,5 +1,4 @@
-context("package")
-
+context("addClassAttribute")
 test_that("addClassAttribute", {
 
   obj <- "hello world!"

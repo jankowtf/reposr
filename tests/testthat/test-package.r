@@ -2,6 +2,7 @@ context("package")
 
 test_that("package", {
 
+  skip("manual only")
   repos  <- normalizePath(file.path(tempdir(), "repos"), winslash="/",
                          mustWork=FALSE)
   dir.create(repos, recursive=TRUE, showWarnings=FALSE)

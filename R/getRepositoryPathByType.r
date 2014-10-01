@@ -8,7 +8,7 @@
 #' @param type \strong{Signature argument}.
 #'    Object containing repository type information. 
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/getRepositoryPathByType.R
 #' @export getRepositoryPathByType
 setGeneric(name="getRepositoryPathByType", 

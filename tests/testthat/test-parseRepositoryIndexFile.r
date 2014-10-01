@@ -1,4 +1,4 @@
-context("package")
+context("parseRepositoryIndexFile-A")
 
 test_that("parseRepositoryIndexFile", {
 

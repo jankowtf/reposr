@@ -10,7 +10,7 @@
 #' @param pkg_version \strong{Signature argument}.
 #'    Object containing package version information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/getRepositoryInfrastructurePaths.R
 #' @export getRepositoryInfrastructurePaths
 setGeneric(name="getRepositoryInfrastructurePaths", 
@@ -33,7 +33,7 @@ setGeneric(name="getRepositoryInfrastructurePaths",
 #' @param pkg_version \code{\link{missing}}. 
 #' @return TODO 
 #' @describeIn getRepositoryInfrastructurePaths
-#' @import rapp.core.description
+#' @import descriptionr
 #' @export
 setMethod(f = "getRepositoryInfrastructurePaths", 
   signature = signature(
@@ -73,7 +73,7 @@ setMethod(f = "getRepositoryInfrastructurePaths",
 #' @param pkg_version \code{\link{character}}. 
 #' @return TODO 
 #' @describeIn getRepositoryInfrastructurePaths
-#' @import rapp.core.description
+#' @import descriptionr
 #' @export
 setMethod(f = "getRepositoryInfrastructurePaths", 
   signature = signature(

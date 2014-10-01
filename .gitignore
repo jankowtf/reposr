@@ -9,3 +9,4 @@ tests/testthat/repos
 *.Rproj.user
 .*so
 .*o
+.Rproj.user

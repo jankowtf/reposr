@@ -6,7 +6,7 @@
 #' @param repos \strong{Signature argument}.
 #'    Object containing repos information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/getRepositoryRoot.R
 #' @export getRepositoryRoot
 setGeneric(name="getRepositoryRoot", 
@@ -72,7 +72,7 @@ setMethod(f = "getRepositoryRoot",
 #' @param repos \code{\link{RappExpandedPackageRepositoryS3}}.  
 #' @describeIn getRepositoryRoot
 #' @export
-#' @import rapp.core.condition
+#' @import conditionr
 setMethod(f = "getRepositoryRoot", 
   signature = signature(
     repos = "RappExpandedPackageRepositoryS3"
@@ -83,7 +83,7 @@ setMethod(f = "getRepositoryRoot",
   
   tmp <- unique(sapply(repos, getRepositoryRoot))
   if (length(tmp) > 1) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "Ambiguous package repository structure",
       msg = c(
         "Unable to identify unambiguous root repository",

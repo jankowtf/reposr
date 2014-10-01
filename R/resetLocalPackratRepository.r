@@ -6,7 +6,7 @@
 #' @param opt_name \strong{Signature argument}.
 #'    Object containing option name information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/resetLocalPackratRepository.R
 #' @export resetLocalPackratRepository
 setGeneric(name="resetLocalPackratRepository", 

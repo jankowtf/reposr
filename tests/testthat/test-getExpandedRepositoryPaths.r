@@ -1,10 +1,10 @@
-context("package")
+context("getExpandedRepositoryPaths-A")
 
 test_that("getExpandedRepositoryPaths", {
 
   repos <- file.path(tempdir(), "repos")
   partial <- getPartialRepositoryScaffold()
-  expected <- as.list(file.path(repos, partial))
+  expected <- as.list(gsub("\\\\", "/", file.path(repos, partial)))
   nms <- names(partial)
   names(expected) <- nms
   expect_equal(res <- getExpandedRepositoryPaths(repos = repos), 
@@ -12,7 +12,7 @@ test_that("getExpandedRepositoryPaths", {
 
   repos <- "."
   partial <- getPartialRepositoryScaffold()
-  expected <- as.list(file.path(repos, partial))
+  expected <- as.list(file.path(normalizePath(repos, winslash = "/"), partial))
   nms <- names(partial)
   names(expected) <- nms
   expect_equal(res <- getExpandedRepositoryPaths(),

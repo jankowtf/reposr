@@ -6,7 +6,7 @@
 #' @param repos \strong{Signature argument}.
 #'    Object containing repository information.
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/rapp.core.repos}
+#' @references \url{http://www.rappster.de/repositr}
 #' @example inst/examples/refreshRepositoryIndex.R
 #' @export refreshRepositoryIndex
 setGeneric(name="refreshRepositoryIndex", 
@@ -85,7 +85,7 @@ setMethod(f = "refreshRepositoryIndex",
 #' @return TODO 
 #' @describeIn refreshRepositoryIndex
 #' @export
-#' @import rapp.core.condition
+#' @import conditionr
 setMethod(f = "refreshRepositoryIndex", 
   signature = signature(
     repos = "RappPackageRepositoryGenericS3"
@@ -99,7 +99,7 @@ setMethod(f = "refreshRepositoryIndex",
   type <- match.arg(type, c("mac.binary", "source", "win.binary"))    
   
   if (!file.exists(getRepositoryRoot(repos = repos))) {
-    rapp.core.condition::signalCondition(
+    conditionr::signalCondition(
       condition = "InvalidPackageRepositoryLocation",
       msg = c(
         "Package repository directory does not exist",

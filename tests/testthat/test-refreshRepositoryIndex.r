@@ -1,4 +1,4 @@
-context("package")
+context("refreshRepositoryIndex-A")
 
 test_that("refreshRepositoryIndex", {
 
