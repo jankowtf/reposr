@@ -1,4 +1,4 @@
-repositr (v0.1.4)
+repor (1.1)
 ======
 
 Local Package Repository Management
@@ -8,89 +8,105 @@ Local Package Repository Management
 ```
 require("devtools")
 devtools::install_github("Rappster/conditionr")
-devtools::install_github("Rappster/descriptionr")
-devtools::install_github("Rappster/repositr")
-require("repositr")
+devtools::install_github("Rappster/repor")
+require("repor")
 ```
 
-## Ensure repository
+## Typical workflow 
 
-Ensure the existence of a local package repository:
+### Specifiy root directory 
 
-```
-ensureRepository(repos = file.path(tempdir(), "repos"))
-# C:/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos 
-#                                             TRUE 
-```
-
-## Ensure local repository infrastructure
-
-Ensure the existence of a local package repository infrastructure consisting of a *global* and *package-and-version-specific* repositories below `repos_root`.
-
-This has been mainly designed for systematically managing repositories of own packages.
+We will use the following directory as our local CRAN-like package repoitory:
 
 ```
-ensureRepositoryInfrastructure(repos_home = file.path(tempdir(), "repos",
-  pkg_name = "test.package", pkg_version = "0.1"))
-#                  C:/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos/test.package/0.1/global 
-#                                                                                      TRUE 
-# C:/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos/test.package/0.1/packages/repositr/0.1.4 
-#                                                                                      TRUE   
+root <- file.path(tempdir(), "cran")
 ```
 
-## Build a package into local repository infrastructure
-
-Prerequisites:
-
-- This requires that your working directory points to the root directory of a valid package project.
-- It also requires that you installed the [Rtools](http://cran.at.r-project.org/bin/windows/Rtools/) and that the `bin` directory is included in your Windows `PATH` variable.
-
-The functionality can be illustrated by building the test package used for unit testing in `{repositr-package}/tests/testthat/data/test.package`
+### Create instance
 
 ```
-path_pkg <- "path/to/repositr/package/tests/testthat/data/test.package"
-if (!file.exists(path_pkg)) {
-  stop(paste0("Invalid directory: ", path_pkg))
-}
+repo <- PackageRepository$new(root)
+```
 
-## Temporarily change working directory y//
-wd_0 <- setwd(path_pkg)
+### Create/ensure repository
 
-## Build test package //
-# buildIntoRepositoryInfrastructure(repos_home = file.path(tempdir(), "repos",
-#   binary = TRUE))
-# Updating test.package documentation
-# Loading test.package
-# Writing test.package.Rd
-# "Q:/home/apps/RAPPTO~1/apps/r/R-31~1.1/bin/x64/R" --vanilla CMD build  \
-#   "Q:\home\wsp\rapp2\repositr\tests\testthat\data\test.package" --no-manual  \
-#   --no-resave-data 
-# 
-# * checking for file 'Q:\home\wsp\rapp2\repositr\tests\testthat\data\test.package/DESCRIPTION' ... OK
-# * preparing 'test.package':
-# * checking DESCRIPTION meta-information ... OK
-# * checking for LF line-endings in source and make files
-# * checking for empty or unneeded directories
-# * looking to see if a 'data/datalist' file should be added
-# * building 'test.package_1.0.tar.gz'
-# 
-# cygwin warning:
-#   MS-DOS style path detected: C:/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos/TRUE/global/src/contrib/test.package_1.0.tar.gz
-#   Preferred POSIX equivalent is: /cygdrive/c/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos/TRUE/global/src/contrib/test.package_1.0.tar.gz
-#   CYGWIN environment variable option "nodosfilewarning" turns off this warning.
-#   Consult the user's guide for more details about POSIX paths:
-#     http://cygwin.com/cygwin-ug-net/using.html#using-pathnames
-# cygwin warning:
-#   MS-DOS style path detected: C:/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos/TRUE/packages/test.package/1.0/src/contrib/test.package_1.0.tar.gz
-#   Preferred POSIX equivalent is: /cygdrive/c/Users/jat/AppData/Local/Temp/Rtmp8KcUF1/repos/TRUE/packages/test.package/1.0/src/contrib/test.package_1.0.tar.gz
-#   CYGWIN environment variable option "nodosfilewarning" turns off this warning.
-#   Consult the user's guide for more details about POSIX paths:
-#     http://cygwin.com/cygwin-ug-net/using.html#using-pathnames
-#                    C:\\Users\\jat\\AppData\\Local\\Temp\\Rtmp8KcUF1/repos/TRUE/global 
-#                                                                                  TRUE 
-# C:\\Users\\jat\\AppData\\Local\\Temp\\Rtmp8KcUF1/repos/TRUE/packages/test.package/1.0 
-#                                                                                  TRUE   
+```
+repo$ensure()
+```
 
-## Clean up //
-setwd(wd_0)
+## Verify existence 
+
+```
+repo$exists()
+```
+
+### Register as R option
+
+```
+(getOption("repos"))
+repo$register()
+(getOption("repos"))
+```
+
+### Browse content 
+
+```
+repo$browse()
+```
+
+### Built into 
+
+```
+repo$buildInto()
+```
+
+### Investigate
+
+Show content based on index file:
+
+```
+repo$show()
+repo$show(type = "source")
+repo$show(type = "mac.binary")
+repo$show(type = "win.binary")
+```
+
+Check if specific package(s) exist(s):
+
+```
+repo$has()
+repo$has(type = "source", atomic = FALSE)
+repo$has(c("devtools", "dplyr"))
+```
+
+### Maintain
+
+Remove outdated packages and refresh. Outdated packages are moved to an 
+special repository archive `repo$root_archive`. 
+
+Each outdated package build will be integrated into its own "one-package-only"  repository: `file.path(repo$root_archive, "<pkg_name>", "<pgk_version>")`
+
+```
+repo$clean()
+```
+
+Remove packages:
+
+```
+repo$remove()
+repo$remove("<pkg_name>")
+```
+
+Reset entire repository:
+
+```
+repo$reset()
+```
+
+### Delete
+
+```
+repo$exists()
+repo$delete()
+repo$exists()
 ```

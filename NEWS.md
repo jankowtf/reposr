@@ -1,3 +1,24 @@
+# CHANGES IN VERSION 0.2
+
+## NEW FEATURES
+
+- `$asUrl()` (https://github.com/rappster/repor/issues/3)
+- `$removePackage()` (https://github.com/rappster/repor/issues/5)
+
+## BUG FIXES
+
+## MAJOR CHANGES
+
+- The package has been radically refactored. The entire functionality is now based on class `PackageRepository`.
+
+## MINOR CHANGES
+
+- Return value consistency (https://github.com/rappster/repor/issues/6)
+
+## MISC
+
+-----
+
 # CHANGES IN VERSION 0.1.4
 
 ## NEW FEATURES
@@ -28,7 +49,7 @@
 
 -----
 
-# CHANGES IN repositr VERSION 0.1.0.10
+# CHANGES IN repor VERSION 0.1.0.10
 
 ## NEW FEATURES
 
@@ -50,7 +71,7 @@
 
 -----
 
-# CHANGES IN repositr VERSION 0.1.0.9
+# CHANGES IN repor VERSION 0.1.0.9
 
 ## NEW FEATURES
 
@@ -66,7 +87,7 @@
 
 -----
 
-# CHANGES IN repositr VERSION 0.1.0.8
+# CHANGES IN repor VERSION 0.1.0.8
 
 ## NEW FEATURES
 

@@ -1,0 +1,109 @@
+---
+title: "Overview"
+author: "Janko Thyson"
+date: "Wednesday, February 04, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE}
+library("repor")
+```
+
+## Typical workflow 
+
+### Specifiy root directory 
+
+We will use the following directory as our local CRAN-like package repoitory:
+
+```{r}
+root <- file.path(tempdir(), "cran")
+```
+
+### Create instance
+
+```{r}
+repo <- PackageRepository$new(root)
+```
+
+### Create/ensure repository
+
+```{r}
+repo$ensure()
+```
+
+## Verify existence 
+
+```{r}
+repo$exists()
+```
+
+### Register as R option
+
+```{r}
+(getOption("repos"))
+repo$register()
+(getOption("repos"))
+```
+
+### Browse content 
+
+```{r}
+repo$browse()
+```
+
+### Built into 
+
+```{r}
+repo$buildInto()
+```
+
+### Investigate
+
+Show content based on index file:
+
+```{r}
+repo$show()
+repo$show(type = "source")
+repo$show(type = "mac.binary")
+repo$show(type = "win.binary")
+```
+
+Check if specific package(s) exist(s):
+
+```{r}
+repo$has()
+repo$has(type = "source", atomic = FALSE)
+repo$has(c("devtools", "dplyr"))
+```
+
+### Maintain
+
+Remove outdated packages and refresh. Outdated packages are moved to an 
+special repository archive `repo$root_archive`. 
+
+Each outdated package build will be integrated into its own "one-package-only"  repository: `file.path(repo$root_archive, "<pkg_name>", "<pgk_version>")`
+
+```{r}
+repo$clean()
+```
+
+Remove packages:
+
+```{r}
+repo$remove()
+repo$remove("<pkg_name>")
+```
+
+Reset entire repository:
+
+```{r}
+repo$reset()
+```
+
+### Delete
+
+```{r}
+repo$exists()
+repo$delete()
+repo$exists()
+```

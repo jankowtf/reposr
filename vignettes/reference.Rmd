@@ -1,0 +1,311 @@
+---
+title: "Reference"
+author: "Janko Thyson"
+date: "Wednesday, February 04, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE}
+library("repor")
+```
+
+
+## Specifiy root directory 
+
+We will use the following directory as our local CRAN-like package repoitory:
+
+```{r}
+root <- file.path(tempdir(), "cran")
+```
+
+## Create instance
+
+```{r}
+repo <- PackageRepository$new(root)
+```
+
+## Object structure
+
+As the most important feature that characterizes a (local) package repoitory is (arguably) its location, the print method for class `PackageRepository` only shows the value of field `root` instead of what is returned by the default method for `R6` objects (`print.R6`). This value corresponds to the package repoitory's root directory:
+
+```{r}
+repo
+```
+
+In order to get an idea about the actual object structure, you can call the print method explicitly and use `full = TRUE`:
+
+```{r}
+print(repo, full = TRUE)
+```
+
+The most important subdirectories that are actively linked to `$root` (and the currently used minor version of R) are:
+
+```{r}
+repo$win.binary
+repo$mac.binary
+repo$source
+```
+
+
+## Typical workflow
+
+### As URL (`$asUrl`)
+
+Often times, you need your local repoitory to be in an [URL format](http://en.wikipedia.org/wiki/Uniform_resource_locator) with 
+[URL scheme](http://en.wikipedia.org/wiki/URI_scheme) `file` (also see `?url`)
+
+```{r}
+repo$asUrl()
+```
+
+Other [URL scheme](http://en.wikipedia.org/wiki/URI_scheme) are also implement, but not really useful as this package focuses on repoitories on a *local* file system (as opposed to a true web-based ressource for which schemes `http` and `ftp` are normally used).
+
+```{r}
+repo$asUrl("http")
+repo$asUrl("ftp")
+```
+
+### Create/ensure (`$ensure()`)
+
+Create/ensure a local package repoitory that complies with the structural conventions of [CRAN](http://cran.r-project.org/):
+
+```{r}
+repo$ensure()
+repo$ensure(plain = TRUE)
+## --> unnamed
+```
+
+### Delete (`$delete()`)
+
+Delete root directory including all subdirectories. 
+
+As for all methods involving critical operations (in the sense that you wouldn't want to perform them accidentally), this method takes an `ask` argument that prompts the user for confirmation:
+
+```{r}
+repo$delete()
+```
+
+Whenever user is prompted for input, the valid inputs are given at the end of the line (`yes` [or `y`], `no` [or `n`] and `quit` [or `q`] in this and most cases)
+
+You can suppress this by setting `ask = FALSE`
+
+```{r}
+repo$delete(ask = FALSE)
+repo$delete(ask = FALSE, plain = TRUE)
+## --> unnamed
+```
+
+What happens when you try to delete a repoitory that does not exist depends on the settings for `strict`. It defaults to `0` in which case no additional message (or condition is issued):
+
+```{r}
+repo$delete()
+```
+
+Here is what happens when `strict` is `> 0`:
+
+```{r}
+repo$delete(strict = 1)
+repo$delete(strict = 2)
+repo$delete(strict = 3)
+```
+
+
+### Check existence (`$exists()`)
+
+```{r}
+repo$exists()
+repo$exists(plain = TRUE)
+repo$ensure()
+repo$exists()
+repo$delete(ask = FALSE)
+repo$exists()
+```
+
+### Build into (`$buildInto()`)
+
+You can seamlessly build your package directly into a local package repoitory using functions of package [`devtools`](https://github.com/hadley/devtools).
+
+First, we ensure the repoitory's existence:
+
+```{r}
+repo$ensure()
+```
+
+Next, we use the `browse` method to display the current repoitory content via the OS's default files system browser: 
+
+```{r}
+repo$browse(getOption("pkgType"))
+```
+
+Before we build our package, let's see the current content of the repoitory's index file:
+
+```{r}
+repo$show()
+```
+
+As we see, the index is still empty at this point.
+
+Now we build our package into the local repoitory. Note that this step assumes that your working directory points to a valid R package project. By default, the *source* version of the package is always along with the binary version corresponding to `getOption("pkgType")` (if your OS is either [Windows](http://windows.microsoft.com/de-de/windows-8/why-windows) or [Mac OS](https://www.apple.com/de/osx/))
+
+```{r}
+repo$buildInto()
+```
+
+Note that the repoitory directory's content has changed: the repoitory now contains the package build(s) and the respective index file(s) (`PACKAGES`) has/have changed.
+
+The index has changed as well:
+
+```{r}
+repo$show()
+```
+
+
+### Check existence of specific package(s) (`$has()`)
+
+This step assumes that you built a package into the repoitory via `$buildInto()`.
+
+When your working directory points to a valid package project, then the method automatically identifies the package name based on the project's `DESCRIPTION` file when being called without an explicit value for `pkg`):
+
+```{r}
+repo$has()
+```
+
+When the name can't be retrieved, an error is thrown:
+
+```{r}
+wd <- setwd("man") 
+## --> unexpected working directory
+repo$has()
+
+## Clean up //
+setwd(wd)
+```
+
+Specify explicit values for `pkg`:
+
+```{r}
+my_pkg <- "repor" 
+## Please change to your package's name
+
+repo$has(my_pkg)
+
+## To include the information about the package type,
+## use `atomic = FALSE`:
+repo$has(my_pkg, atomic = FALSE)
+
+repo$has(my_pkg, type = "source", atomic = FALSE)
+repo$has(my_pkg, type = "mac.binary", atomic = FALSE)
+
+repo$has("devtools")
+repo$has(c(my_pkg, "devtools"))
+```
+
+## Second-order methods for users 
+
+### Are there any packages at all (`$hasAny()`)
+
+Check if a repoitory contains *any* packages at all
+
+```{r}
+repo$hasAny()
+repo$hasAny(atomic = TRUE)
+```
+
+### Show content (`$show()`)
+
+Show the content based on a repoitory's index file.
+
+This step assumes that you built a package into the repoitory via `$buildInto()`.
+
+```{r}
+repo$ensure()
+repo$show()
+repo$show(type = "win.binary")
+repo$show(type = "mac.binary")
+repo$show(type = "source")
+```
+
+### Refresh (`$refresh()`)
+
+Refresh a repoitory. This implies updating the index files according to the latest available package builds.
+
+```{r}
+repo$ensure()
+repo$refresh()
+```
+
+### Remove packages (`$remove`)
+
+This step assumes that you built a package into the repoitory via `$buildInto()`.
+
+Remove package associated to the current package project (across all package type subdirectories):
+
+```{r}
+repo$browse(getOption("pkgType"))
+## --> note the different status before and after removal
+
+repo$remove()
+```
+
+
+With explicit value for `pkg` (multiple values are also possible):
+
+```{r}
+my_pkg <- "repor"
+## Please change to your package's name
+
+repo$remove(my_pkg)
+repo$remove(my_pkg, ask = FALSE)
+## --> already removed
+```
+
+Remove packages selectively (types/subdirectories). This requires a re-build of your package.
+
+```{r}
+my_pkg <- "repor"
+## Please change to your package's name
+
+repo$buildInto()
+repo$browse(path = "source")
+
+repo$remove(my_pkg, type = "source", ask = FALSE)
+## --> only the source build is removed
+
+repo$browse(path = getOption("pkgType"))
+repo$remove(my_pkg, type = getOption("pkgType"), ask = FALSE)
+## --> only the default package type is removed
+```
+
+### Reset (`$reset()`)
+
+Resets a repoitory to the initial state (corresponds to the result of initially calling `$ensure()` or `$ensure(overwrite = TRUE)`).
+
+```{r}
+repo$buildInto()
+repo$browse(path = "source")
+repo$reset()
+```
+
+### Clean (`$clean()`)
+
+Cleans a repoitory in the sense that old package versions are either deleted or archived. By default, a repoitory is refreshed before the actual cleaning takes place (can be controlled via `refresh = TRUE/FALSE`).
+
+```{r}
+repo$clean()
+```
+
+Old versions are archived to directory `<repo-name>_archive` below the parent directory a repoitory's root directory
+
+In our case, this would be the following directory
+```{r}
+paste0(repo$root, "_archive")
+```
+
+#### Note
+
+You can delete repoitory archives by using the `archive` parameter:
+
+```{r}
+repo$delete(archive = TRUE)
+```
+
