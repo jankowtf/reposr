@@ -9,6 +9,5 @@
 #' @references \url{http://www.rappster.de/repor}
 #' @export .onAttach
 .onAttach <- function(libname, pkgname) {
-  setOldClass("PackageRepository.S3")
-  setOldClass("PackageRepositoryRoot.S3")
+
 }
