@@ -6,15 +6,15 @@
 #' @param libname 
 #' @param pkgname
 #' @author Janko Thyson \email{janko.thyson@@rappster.de}
-#' @references \url{http://www.rappster.de/repositr}
+#' @references \url{http://www.rappster.de/repor}
 #' @export .onLoad
 .onLoad <- function(libname, pkgname) {
-  setOldClass("RappExpandedPackageRepositoryS3")
-  setOldClass("RappPackageRepositoryS3")
-  setOldClass("RappPackageRepositoryGenericS3")
-  setOldClass("RappPackageRepositoryMacBinaryS3")
-  setOldClass("RappPackageRepositoryWinBinaryS3")
-  setOldClass("RappPackageRepositorySourceS3")
+  setOldClass("PackageRepository.S3")
+  setOldClass("PackageRepositoryRoot.S3")
+  setOldClass("PackageRepositorySubGeneric.S3")
+  setOldClass("PackageRepositorySubMac.S3")
+  setOldClass("PackageRepositorySubMac.S3")
+  setOldClass("PackageRepositorySubSource.S3")
   setOldClass("RappPackageRepositoryListS3")
   setOldClass("RappParsedPackageRepositoryIndexS3")
 }

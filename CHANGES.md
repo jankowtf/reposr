@@ -1,3 +1,6 @@
+# Version 0.2
+- Manual bump
+
 # Version 0.1.4
  - Cleanup commit
 
