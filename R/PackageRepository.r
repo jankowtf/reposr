@@ -3,6 +3,9 @@
 #'
 #' @description
 #' Class representing package repositories.
+#' 
+#' @section Methods:
+#' \code{\link[reposr]{testMethod}}
 #'    
 #' @field root \code{\link{character}}.
 #'  Repository's root path.
@@ -11,7 +14,8 @@
 #' @example inst/examples/PackageRepository.r
 #' @template author
 #' @template references
-#' @import descriptionr
+#' @import conditionr
+#' @import miniCRAN
 #' @import R6
 #' @export
 PackageRepository <- R6Class(
@@ -237,6 +241,37 @@ PackageRepository <- R6Class(
         structure(TRUE, names = path)
       }
     },
+    #' @import miniCRAN
+    dependsOn = function(
+      pkg = private$getPackageName(),
+      type = getOption("pkgType"),
+      local_only = FALSE,
+      depends = TRUE,
+      suggests = TRUE,
+      enhances = FALSE,
+      ...
+    ) {
+      if (!self$has(pkg)) {
+        conditionr::signalCondition(
+          condition = "InvalidPackageOrRepo",
+          msg = c(
+            "Invalid package(s) or repo",
+            Repository = self$root,
+            Type = type,
+            Packages = paste(pkg, collapse = ", ")
+          ),
+          type = "error"
+        )
+      }
+      repo <- if (!local_only) {
+        getOption("repos")
+      } else {
+        self$asUrl()
+      }
+      miniCRAN::pkgDep(pkg, repos = repo, 
+        type = type, depends = depends, suggests = suggests, 
+        enhances = enhances, ...) 
+    },
     ensure = function(
       archive = FALSE,
       overwrite = FALSE, 
@@ -311,6 +346,31 @@ PackageRepository <- R6Class(
         }
       }   
     },
+    visualizeDependencies = function(
+      pkg = private$getPackageName(),
+      export = character(),
+      ...
+    ) {
+      p <- makeDepGraph(pkg, enhances = TRUE)
+      if (!length(export)) {
+        plot(p)
+        invisible(NULL)
+      } else {
+        if (grepl("\\.svg$", export)) {
+          svg(export, ...)  
+        } else if (grepl("\\.png$", export)) {
+          png(export, ...)
+        } else if (grepl("\\.pdf$", export)) {
+          pdf(export, ...)
+        } else {
+          stop("Specify file extension (.svg, .png or .pdf)")
+        }
+        
+        suppressWarnings(plot(p))
+        dev.off()
+        export
+      }
+    },
     hasAny = function(
       atomic = FALSE,
       refresh = TRUE
@@ -365,16 +425,31 @@ PackageRepository <- R6Class(
       }
       out
     },
+    pull = function(
+      pkg = private$getPackageName(),
+      type = c(getOption("pkgType"), "source")
+    ) {
+      self$ensure()
+      self$register()
+      deps <- self$dependsOn(pkg)
+      sapply(type, function(ii) {
+        makeRepo(deps, path = self$root, type = ii, download = TRUE)   
+      })
+      TRUE
+    },
     refresh = function() {
       structure(all(private$ensureIndexFiles(overwrite = TRUE)), 
         names = self$root)
     },
     register = function(
-      name = "LCRAN",
+      name = "CRAN",
       before_cran = TRUE
     ) {
       repo <- self$asUrl()
       current <- getOption("repos")
+      if (!length(private$.roption_repo_cache)) {
+        private$.roption_repo_cache <- current
+      }
       if (!repo %in% current) {
         updated <- if (before_cran) {
           c(structure(repo, names = name), current)
@@ -484,6 +559,29 @@ PackageRepository <- R6Class(
       type = getOption("pkgType")
     ) {
       private$parseIndexFile(type = type)
+    },
+    unregister = function(
+      reset = FALSE
+    ) {
+      repo <- self$asUrl()
+      if (reset) {
+        if (length(private$.roption_repo_cache)) {
+          options("repos" = private$.roption_repo_cache)
+          private$.roption_repo_cache <- character()
+          TRUE
+        } else {
+          FALSE
+        }
+      } else {
+        current <- getOption("repos")
+        if (length(idx <- which(current %in% repo))) {
+          updated <- current[-idx]
+          options("repos" = updated)
+          TRUE
+        } else {
+          FALSE
+        }
+      }
     }
   ),
 
@@ -492,13 +590,14 @@ PackageRepository <- R6Class(
   ##----------------------------------------------------------------------------
 
   private = list(
-    .root = "character",
+    .root = character(),
     .mac.binary = "bin/macosx/contrib",
     .win.binary = "bin/windows/contrib",
     .source = "src/contrib",
+    .roption_repo_cache = character(),
     rversion = paste(
       R.version$major, 
-      unlist(strsplit(R.version$minor, split="\\."))[2], sep="."
+      unlist(strsplit(R.version$minor, split="\\."))[1], sep="."
     ),
     subdirs = "character",
     strict = 0:3,

@@ -1,4 +1,4 @@
-Package: repor
+Package: reposr
 Type: Package
 Title: Local Package Repository Management
 Version: 0.2
@@ -15,4 +15,6 @@ Repository: CRAN
 Imports:
     conditionr,
     devtools,
+    miniCRAN,
     R6
+    

@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r, echo=FALSE}
-library("repor")
+library("reposr")
 ```
 
 
@@ -184,7 +184,7 @@ setwd(wd)
 Specify explicit values for `pkg`:
 
 ```{r}
-my_pkg <- "repor" 
+my_pkg <- "reposr" 
 ## Please change to your package's name
 
 repo$has(my_pkg)
@@ -251,7 +251,7 @@ repo$remove()
 With explicit value for `pkg` (multiple values are also possible):
 
 ```{r}
-my_pkg <- "repor"
+my_pkg <- "reposr"
 ## Please change to your package's name
 
 repo$remove(my_pkg)
@@ -262,7 +262,7 @@ repo$remove(my_pkg, ask = FALSE)
 Remove packages selectively (types/subdirectories). This requires a re-build of your package.
 
 ```{r}
-my_pkg <- "repor"
+my_pkg <- "reposr"
 ## Please change to your package's name
 
 repo$buildInto()
