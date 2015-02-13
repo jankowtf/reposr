@@ -3,3 +3,10 @@ Version: 1.0
 MD5sum: 7a07a994d6ce4dbf95c56944c9967225
 NeedsCompilation: no
 
+Package: reposr
+Version: 0.2
+Imports: conditionr, devtools, miniCRAN, R6
+License: GPL (>= 2)
+MD5sum: dfbb48af285d3474a80164623bb428db
+NeedsCompilation: no
+

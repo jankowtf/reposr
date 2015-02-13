@@ -2,3 +2,5 @@
 
 export(PackageRepository)
 import(R6)
+import(conditionr)
+import(miniCRAN)

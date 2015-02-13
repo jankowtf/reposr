@@ -2,8 +2,8 @@
 
 ## NEW FEATURES
 
-- `$asUrl()` (https://github.com/rappster/repor/issues/3)
-- `$removePackage()` (https://github.com/rappster/repor/issues/5)
+- `$asUrl()` (https://github.com/rappster/reposr/issues/3)
+- `$removePackage()` (https://github.com/rappster/reposr/issues/5)
 
 ## BUG FIXES
 
@@ -13,7 +13,7 @@
 
 ## MINOR CHANGES
 
-- Return value consistency (https://github.com/rappster/repor/issues/6)
+- Return value consistency (https://github.com/rappster/reposr/issues/6)
 
 ## MISC
 
@@ -49,7 +49,7 @@
 
 -----
 
-# CHANGES IN repor VERSION 0.1.0.10
+# CHANGES IN reposr VERSION 0.1.0.10
 
 ## NEW FEATURES
 
@@ -71,7 +71,7 @@
 
 -----
 
-# CHANGES IN repor VERSION 0.1.0.9
+# CHANGES IN reposr VERSION 0.1.0.9
 
 ## NEW FEATURES
 
@@ -87,7 +87,7 @@
 
 -----
 
-# CHANGES IN repor VERSION 0.1.0.8
+# CHANGES IN reposr VERSION 0.1.0.8
 
 ## NEW FEATURES
 

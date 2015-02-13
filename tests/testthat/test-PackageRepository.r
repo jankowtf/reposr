@@ -1,6 +1,6 @@
 rversion <- paste(
   R.version$major, 
-  unlist(strsplit(R.version$minor, split="\\."))[2], sep="."
+  unlist(strsplit(R.version$minor, split="\\."))[1], sep="."
 )
 .cleanTempDir <- function(x) {
   if (grepl(basename(tempdir()), x)) {
@@ -252,6 +252,28 @@ test_that("PackageRepository/delete/archive", {
 })
 
 ##------------------------------------------------------------------------------
+context("PackageRepository/depends on")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/depends on", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/lcran_3")
+  )
+#   file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+#   root <- file.path(tempdir(), "lcran_3")
+  repo <- PackageRepository$new(root = root)
+  
+  options("repos" = c(CRAN = "http://cran.rstudio.com", 
+    LCRAN = repo$asUrl()))
+  ## --> necessary for global test run
+  
+  expect_true(length(repo$dependsOn()) > 0)
+  expect_true(length(repo$dependsOn(local_only = TRUE)) < 6)
+  
+})
+
+##------------------------------------------------------------------------------
 context("PackageRepository/ensure")
 ##------------------------------------------------------------------------------
 
@@ -410,18 +432,20 @@ test_that("PackageRepository/refresh", {
 context("PackageRepository/register")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/constructor/register", {
+test_that("PackageRepository/register", {
   
   opts <- getOption("repos")
   repo <- PackageRepository$new()
   expect_true(repo$register())
-  expect_identical(getOption("repos")[1], structure(repo$asUrl(), names = "LCRAN"))
+  expect_identical(getOption("repos")[1], 
+    structure(repo$asUrl(), names = "CRAN"))
+  expect_true(length(environment(repo$ensure)$private$.roption_repo_cache) > 0)
   
   repo <- PackageRepository$new(root = file.path(tempdir(), "lcran"))
   expect_true(repo$register(before_cran = FALSE))
   opts_2 <- getOption("repos")
   expect_identical(opts_2[length(opts_2)], structure(repo$asUrl(), 
-    names = "LCRAN"))
+    names = "CRAN"))
   
   on.exit(options("repos" = opts))
   
@@ -497,6 +521,77 @@ test_that("PackageRepository/show", {
   expect_is(repo <- PackageRepository$new(root = root), "PackageRepository")
   expect_true(length(index <- repo$show()) > 0)
   expect_equal(index$Package, "dummy")    
+  
+})
+
+##------------------------------------------------------------------------------
+context("PackageRepository/unregister")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/unregister", {
+  
+  withConditionalWorkingDirectory(
+    root <- file.path(getwd(), "data/lcran_2")
+  )
+  repo <- PackageRepository$new(root)
+  repo$register()
+  expect_true(length(getOption("repos")) == 3)
+  expect_true(repo$unregister())
+  expect_true(length(getOption("repos")) == 2)
+  
+})
+
+test_that("PackageRepository/unregister/reset", {
+  
+  withConditionalWorkingDirectory(
+    root <- file.path(getwd(), "data/lcran_2")
+  )
+  repo_1 <- PackageRepository$new(root)
+  repo_1$register()  
+  withConditionalWorkingDirectory(
+    root <- file.path(getwd(), "data/lcran_3")
+  )
+  repo_2 <- PackageRepository$new(root)
+  repo_2$register()  
+
+#   expect_true(length(getOption("repos")) == 4)
+  ## --> somehow `CRANextra' does not seem to be included in the batch run
+  expect_true(length(getOption("repos")) >= 3)
+  expect_true(repo_1$unregister(reset = TRUE))
+  expect_true(length(getOption("repos")) == 2)
+  
+})
+
+##------------------------------------------------------------------------------
+context("PackageRepository/unregister")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/unregister", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/lcran_3")
+  )
+  repo <- PackageRepository$new(root)
+  repo$register()
+  expect_null(repo$visualizeDependencies())
+  withConditionalWorkingDirectory(    
+    expect_is(res <- repo$visualizeDependencies(
+      export = file.path(getwd(), "data/test.png")), "character")
+  )
+  expect_true(file.exists(res))
+  unlink(res, force = TRUE)
+  withConditionalWorkingDirectory(    
+    expect_is(res <- repo$visualizeDependencies(
+      export = file.path(getwd(), "data/test.svg")), "character")
+  )
+  expect_true(file.exists(res))
+  unlink(res, force = TRUE)
+  withConditionalWorkingDirectory(    
+    expect_is(res <- repo$visualizeDependencies(
+      export = file.path(getwd(), "data/test.pdf")), "character")
+  )
+  expect_true(file.exists(res))
+  unlink(res, force = TRUE)
   
 })
 
@@ -599,7 +694,7 @@ test_that("PackageRepository/private/archivePackages", {
     file.copy("data/lcran", tempdir(), recursive = TRUE)
   )
   repo <- PackageRepository$new(root = root)
-self = repo  
+# self = repo  
   private <- environment(repo$ensure)$private
   expect_is(res <- private$archivePackages(refresh = FALSE), "list")
   expect_identical(res[[getOption("pkgType")]], c(dummy_1.0 = TRUE, dummy_1.1 = TRUE))
@@ -628,3 +723,4 @@ test_that("PackageRepository/private/parse index file", {
 # self = repo
 # wd_0 <- setwd("tests/testthat")
 # setwd(wd_0)
+# print(warnings())
