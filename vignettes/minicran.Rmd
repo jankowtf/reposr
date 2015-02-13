@@ -1,0 +1,30 @@
+---
+title: "Use in combination with miniCRAN"
+author: "Janko Thyson"
+date: "Wednesday, February 04, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE}
+library("reposr")
+```
+
+## Comparison
+
+Assumes that working directory points to a valid package project
+
+```{r}
+require("microbenchmark")
+
+root <- "tests/testthat/data/lcran_3"
+file.copy(root, tempdir(), recursive = TRUE)
+
+repo <- PackageRepository$new(root = root)
+repo$register()
+
+microbenchmark(
+  "1" = repo$dependsOn("invalid"),
+  "2" = try(miniCRAN::pkgDep("invalid"))
+)
+```
+

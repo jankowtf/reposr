@@ -4,7 +4,7 @@
 \name{PackageRepository}
 \alias{PackageRepository}
 \title{Class: PackageRepository}
-\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x00000000087f8028> 
+\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x000000000a2def90> 
  - attr(*, "name")= chr "PackageRepository_generator"
 }}
 \usage{
@@ -22,6 +22,10 @@ Repository's root path.}
 \item{\code{type}}{\code{\link{character}}.
 Repository path type.}
 }}
+\section{Methods}{
+
+\code{\link[reposr]{testMethod}}
+}
 \examples{
 ##------------------------------------------------------------------------------
 ## Preliminaries //
@@ -186,7 +190,7 @@ repo$show()
 Janko Thyson \email{janko.thyson@gmail.com}
 }
 \references{
-\url{http://github.com/rappster/repor}
+\url{http://github.com/rappster/reposr}
 }
 \keyword{datasets}
 

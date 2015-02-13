@@ -1,4 +1,4 @@
-# CHANGES IN repor from 0.1.4 to VERSION 0.2
+# CHANGES IN reposr from 0.1.4 to VERSION 0.2
 
 ## NEW FEATURES
   
@@ -12,7 +12,7 @@
 
 ## TODO
 
-- https://github.com/rappster/repor/issues/1
-- https://github.com/rappster/repor/issues/2
+- https://github.com/rappster/reposr/issues/1
+- https://github.com/rappster/reposr/issues/2
 
 

@@ -1,4 +1,4 @@
-repor (0.2)
+reposr (0.2)
 ======
 
 Local Package Repository Management
@@ -8,8 +8,8 @@ Local Package Repository Management
 ```
 require("devtools")
 devtools::install_github("Rappster/conditionr")
-devtools::install_github("Rappster/repor")
-require("repor")
+devtools::install_github("Rappster/reposr")
+require("reposr")
 ```
 
 ## Typical workflow 
@@ -40,14 +40,37 @@ repo$ensure()
 repo$exists()
 ```
 
-### Register as R option
+### Register and unregister in R options
+
+Register:
 
 ```
-(getOption("repos"))
+getOption("repos")
 repo$register()
-(getOption("repos"))
+getOption("repos")
 ```
 
+Unegister:
+
+```
+getOption("repos")
+repo$register()
+getOption("repos")
+repo$unregister()
+getOption("repos")
+```
+
+You can also reset the repos in the R options to its initial state:
+
+```
+tmp_1 <- PackageRepository$new("a/b/c")
+tmp_2 <- PackageRepository$new("1/2/3")
+tmp_1$register()
+tmp_2$register()
+getOption("repos")
+tmp_1$unregister(reset = TRUE)
+getOption("repos")
+```
 ### Browse content 
 
 ```
