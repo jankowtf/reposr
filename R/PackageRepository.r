@@ -346,6 +346,15 @@ PackageRepository <- R6Class(
         }
       }   
     },
+    export = function(
+      to = tempdir(),
+      overwrite = FALSE
+    ) {
+      dir.create(to, recursive = TRUE, showWarnings = FALSE)
+      sapply(list.files(self$root, full.names = TRUE), file.copy, to = to, 
+        recursive = TRUE, overwrite = overwrite)
+      structure(TRUE, names = to)
+    },
     visualizeDependencies = function(
       pkg = private$getPackageName(),
       export = character(),

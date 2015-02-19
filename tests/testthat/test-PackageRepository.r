@@ -348,6 +348,23 @@ test_that("PackageRepository/exists/archive", {
 })
 
 ##------------------------------------------------------------------------------
+context("PackageRepository/export")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/export", {
+  
+  root <- file.path(tempdir(), "lcran")
+  repo <- PackageRepository$new(root = root)
+  repo$ensure()
+  to <- file.path(tempdir(), "lcran_2")
+  expect_true(repo$export(to = to))
+  expect_true(file.exists(to))
+  repo$delete(ask = FALSE)
+  unlink(to, recursive = TRUE)
+  
+})
+
+##------------------------------------------------------------------------------
 context("PackageRepository/has any")
 ##------------------------------------------------------------------------------
 
@@ -518,7 +535,7 @@ test_that("PackageRepository/show", {
   withConditionalWorkingDirectory(
     root <- file.path(getwd(), "data/lcran_2")
   )
-  expect_is(repo <- PackageRepository$new(root = root), "PackageRepository")
+  repo <- PackageRepository$new(root = root)
   expect_true(length(index <- repo$show()) > 0)
   expect_equal(index$Package, "dummy")    
   
@@ -721,6 +738,7 @@ test_that("PackageRepository/private/parse index file", {
 # res <- asRepository()
 # res$root
 # self = repo
+# private = environment(self$ensure)$private
 # wd_0 <- setwd("tests/testthat")
 # setwd(wd_0)
 # print(warnings())

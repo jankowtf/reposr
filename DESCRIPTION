@@ -1,7 +1,7 @@
 Package: reposr
 Type: Package
 Title: Local Package Repository Management
-Version: 0.2
+Version: 0.2.1
 Date: 2015-11-11 18:18:29
 Author: Janko Thyson [aut, cre]
 Maintainer: Janko Thyson <janko.thyson@gmail.com>

@@ -4,7 +4,7 @@
 \name{PackageRepository}
 \alias{PackageRepository}
 \title{Class: PackageRepository}
-\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x000000000a2def90> 
+\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x000000000669f058> 
  - attr(*, "name")= chr "PackageRepository_generator"
 }}
 \usage{
