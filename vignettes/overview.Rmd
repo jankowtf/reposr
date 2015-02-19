@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r, echo=FALSE}
-library("repor")
+library("reposr")
 ```
 
 ## Typical workflow 

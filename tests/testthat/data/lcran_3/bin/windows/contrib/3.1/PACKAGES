@@ -1,0 +1,5 @@
+Package: reposr
+Version: 0.2
+Imports: conditionr, devtools, miniCRAN, R6
+License: GPL (>= 2)
+
