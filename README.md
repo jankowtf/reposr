@@ -1,4 +1,4 @@
-reposr (0.2)
+reposr (0.2.2)
 ======
 
 Local Package Repository Management
@@ -124,6 +124,33 @@ Reset entire repository:
 
 ```
 repo$reset()
+```
+
+### Pull dependencies
+
+```
+repo$pull()
+```
+
+### Export 
+
+Export entire repository:
+
+```
+to <- file.path(tempdir(), "cran_2")
+repo$export(to = to)
+repo_2 <- PackageRepository$new(to)
+repo_2$browse()
+```
+
+Export package(s):
+
+```
+to <- file.path(tempdir(), "cran_3")
+repo$export(pkg = "reposr", to = to)
+repo_2 <- PackageRepository$new(to)
+repo_2$browse()
+repo_2$delete(ask = FALSE)
 ```
 
 ### Delete

@@ -1,0 +1,15 @@
+Package: R6
+Version: 2.0.1
+Depends: R (>= 3.0)
+Suggests: knitr, microbenchmark, pryr, testthat, ggplot2, scales
+License: MIT + file LICENSE
+MD5sum: 64cd43604941b7f39ef2956ed195429d
+NeedsCompilation: no
+
+Package: reposr
+Version: 0.2
+Imports: conditionr, devtools, miniCRAN, R6
+License: GPL (>= 2)
+MD5sum: 7076b6e12e3a3feac873db53bbd71f47
+NeedsCompilation: no
+
