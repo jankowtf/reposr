@@ -249,6 +249,7 @@ PackageRepository <- R6Class(
       depends = TRUE,
       suggests = TRUE,
       enhances = FALSE,
+      register = FALSE,
       ...
     ) {
       if (!self$has(pkg)) {
@@ -267,6 +268,9 @@ PackageRepository <- R6Class(
         getOption("repos")
       } else {
         self$asUrl()
+      }
+      if (register) {
+        self$register()
       }
       miniCRAN::pkgDep(pkg, repos = repo, 
         type = type, depends = depends, suggests = suggests, 
@@ -347,13 +351,33 @@ PackageRepository <- R6Class(
       }   
     },
     export = function(
+      pkg = character(),
+      type = c(getOption("pkgType"), "source"),
       to = tempdir(),
       overwrite = FALSE
     ) {
-      dir.create(to, recursive = TRUE, showWarnings = FALSE)
-      sapply(list.files(self$root, full.names = TRUE), file.copy, to = to, 
-        recursive = TRUE, overwrite = overwrite)
-      structure(TRUE, names = to)
+      if (!length(pkg)) {
+      ## Entire repo //  
+        dir.create(to, recursive = TRUE, showWarnings = FALSE)
+        sapply(list.files(self$root, full.names = TRUE), file.copy, to = to, 
+          recursive = TRUE, overwrite = overwrite)
+        structure(TRUE, names = to)
+      } else {
+        repo_to <- PackageRepository$new(to)
+        repo_to$ensure()
+        out <- sapply(type, function(ii) {
+          out <- sapply(pkg, function(ii_2) {
+            path <- list.files(self[[ii]], pattern = ii_2, full.names = TRUE)
+            path <- path[length(path)]
+            file.copy(path, repo_to[[ii]], overwrite = overwrite)
+            structure(TRUE, names = file.path(repo_to[[ii]], basename(path)))
+          }, USE.NAMES = FALSE)
+        }, USE.NAMES = FALSE)
+        repo_to$refresh()
+#         names(out) <- NULL
+#         unlist(out)
+        out
+      }
     },
     visualizeDependencies = function(
       pkg = private$getPackageName(),
@@ -442,8 +466,29 @@ PackageRepository <- R6Class(
       self$register()
       deps <- self$dependsOn(pkg)
       sapply(type, function(ii) {
-        makeRepo(deps, path = self$root, type = ii, download = TRUE)   
+        suppressWarnings(makeRepo(deps, path = self$root, 
+          type = ii, download = TRUE))
+        pkg_local <- setdiff(deps, self$show(type = ii)$Package)
+        if (length(pkg_local)) {
+          ## Local CRANs //
+          repos_local <- grep("file://", getOption("repos"), value = TRUE)
+          pkgs_local <- pkgAvail(repos = repos_local, type = ii)  
+          sapply(pkg_local, function(ii_2) {
+            tmp <- pkgs_local[which(pkgs_local[, "Package"] %in% ii_2), , drop = FALSE]  
+            if (!nrow(tmp)) {
+              stop("Local package not found")
+            }
+            repo_local <- tmp[1, "Repository"]
+#             if (!exists(repo_local, .buffer, inherits = FALSE)) {
+              repo_local <- PackageRepository$new(
+              private$deriveRoot(repo_local, type = ii))  
+#               assign()
+#             }
+            repo_local$export(pkg = ii_2, type = ii, to = self$root, overwrite = TRUE)
+          })
+        }
       })
+      self$refresh()
       TRUE
     },
     refresh = function() {
@@ -653,43 +698,17 @@ PackageRepository <- R6Class(
         force
       }
     },
-    validateExistence = function(
-      strict = 0:3
+    deriveRoot = function(
+      input,
+      type = getOption("pkgType")
     ) {
-      strict = match.arg(as.character(strict), as.character(0:3))
-      if (!file.exists(self$root)) {
-        if (strict == 1) {
-          conditionr::signalCondition(
-            condition = "NegativeExistenceCheck",
-            msg = c(
-              "Repository does not exist",
-              Path = self$root
-            ),
-            type = "message"
-          )
-        } else if (strict == 2) {
-          conditionr::signalCondition(
-            condition = "NegativeExistenceCheck",
-            msg = c(
-              "Repository does not exist",
-              Path = self$root
-            ),
-            type = "warning"
-          )
-        } else if (strict == 3) {
-          conditionr::signalCondition(
-            condition = "NegativeExistenceCheck",
-            msg = c(
-              "Repository does not exist",
-              Path = self$root
-            ),
-            type = "error"
-          )
-        }
-        FALSE
-      } else {
-        TRUE
-      }
+      if (type == "source") {
+        gsub(paste0("file:///|/", private$.source, ".*$"), "", input)
+      } else if (type == "mac.binary") {
+        gsub(paste0("file:///|/", private$.mac.binary, ".*$"), "", input)
+      } else if (type == "win.binary") {
+        gsub(paste0("file:///|/", private$.win.binary, ".*$"), "", input)
+      } 
     },
     ensureIndexFiles = function(
       archive = FALSE, 
@@ -900,7 +919,45 @@ PackageRepository <- R6Class(
         message(paste0("Invalid input: ", input))
         NULL
       }
-    }  
+    },
+    validateExistence = function(
+      strict = 0:3
+    ) {
+      strict = match.arg(as.character(strict), as.character(0:3))
+      if (!file.exists(self$root)) {
+        if (strict == 1) {
+          conditionr::signalCondition(
+            condition = "NegativeExistenceCheck",
+            msg = c(
+              "Repository does not exist",
+              Path = self$root
+            ),
+            type = "message"
+          )
+        } else if (strict == 2) {
+          conditionr::signalCondition(
+            condition = "NegativeExistenceCheck",
+            msg = c(
+              "Repository does not exist",
+              Path = self$root
+            ),
+            type = "warning"
+          )
+        } else if (strict == 3) {
+          conditionr::signalCondition(
+            condition = "NegativeExistenceCheck",
+            msg = c(
+              "Repository does not exist",
+              Path = self$root
+            ),
+            type = "error"
+          )
+        }
+        FALSE
+      } else {
+        TRUE
+      }
+    }
   ),
 
   ##----------------------------------------------------------------------------
