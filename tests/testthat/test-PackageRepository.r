@@ -351,7 +351,7 @@ test_that("PackageRepository/exists/archive", {
 context("PackageRepository/export")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/export", {
+test_that("PackageRepository/export/entire repo", {
   
   root <- file.path(tempdir(), "lcran")
   repo <- PackageRepository$new(root = root)
@@ -359,6 +359,37 @@ test_that("PackageRepository/export", {
   to <- file.path(tempdir(), "lcran_2")
   expect_true(repo$export(to = to))
   expect_true(file.exists(to))
+  repo$delete(ask = FALSE)
+  unlink(to, recursive = TRUE)
+  
+})
+
+test_that("PackageRepository/export/package", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/lcran_3")
+  )
+  file.copy(root, tempdir(), recursive = TRUE)
+  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran_3"))
+  to <- file.path(tempdir(), "lcran_new")
+  expect_true(all(res <- repo$export(pkg = "reposr", to = to)))
+  expect_true(all(sapply(names(res), file.exists)))
+  repo$delete(ask = FALSE)
+  unlink(to, recursive = TRUE)
+  
+})
+
+test_that("PackageRepository/export/packages", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/lcran_4")
+  )
+  file.copy(root, tempdir(), recursive = TRUE)
+  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran_4"))
+  to <- file.path(tempdir(), "lcran_new")
+  
+  expect_true(all(res <- repo$export(pkg = c("reposr", "R6"), to = to)))
+  expect_true(all(sapply(names(res), file.exists)))
   repo$delete(ask = FALSE)
   unlink(to, recursive = TRUE)
   
@@ -427,6 +458,35 @@ test_that("PackageRepository/has package/multiple", {
     repo$has(pkg = pkg, type = "mac.binary", atomic = FALSE),
     structure(list(rep(c(dummy = FALSE), 2)), names = "mac.binary")
   )
+  repo$delete(ask = FALSE)
+  
+})
+
+##------------------------------------------------------------------------------
+context("PackageRepository/pull")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/pull", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/lcran_4")
+  )
+  file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran_4"))
+  
+  repo_rappster <- PackageRepository$new(
+    root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+  repo_rappster$show()  
+  repo_rappster$register()
+#   repo <- PackageRepository$new(root = root)
+#   repo$buildInto(ensure = TRUE)
+#   repo$register()
+#   repo$dependsOn()
+#   self=repo
+  expect_true(repo$pull())
+  expect_true(length(list.files(repo$source)) >= 25)
+  repo_rappster$unregister()
+  repo$unregister()
   repo$delete(ask = FALSE)
   
 })
@@ -580,10 +640,10 @@ test_that("PackageRepository/unregister/reset", {
 })
 
 ##------------------------------------------------------------------------------
-context("PackageRepository/unregister")
+context("PackageRepository/visualizeDependencies")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/unregister", {
+test_that("PackageRepository/visualizeDependencies", {
   
   withConditionalWorkingDirectory(    
     root <- file.path(getwd(), "data/lcran_3")
@@ -615,6 +675,35 @@ test_that("PackageRepository/unregister", {
 ################################################################################
 ## Private methods //
 ################################################################################
+
+##------------------------------------------------------------------------------
+context("PackageRepository/private/derive root")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/private/derive root", {
+  
+  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran"))
+  private <- environment(repo$ensure)$private
+  expect_identical(
+    private$deriveRoot(
+      "file:///c:/temp/cran/bin/windows/contrib/3.1", type = "win.binary"
+    ),
+    "c:/temp/cran"
+  )
+  expect_identical(
+    private$deriveRoot(
+      "file:///c:/temp/cran/bin/macosx/contrib/3.1", type = "mac.binary"
+    ),
+    "c:/temp/cran"
+  )
+  expect_identical(
+    private$deriveRoot(
+      "file:///c:/temp/cran/src/contrib", type = "source"
+    ),
+    "c:/temp/cran"
+  )
+  
+})
 
 ##------------------------------------------------------------------------------
 context("PackageRepository/private/ensureIndexFiles")
