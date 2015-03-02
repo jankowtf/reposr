@@ -4,7 +4,7 @@
 \name{PackageRepository}
 \alias{PackageRepository}
 \title{Class: PackageRepository}
-\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x000000000a2d2320> 
+\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x0000000006a89ae8> 
  - attr(*, "name")= chr "PackageRepository_generator"
 }}
 \usage{
@@ -19,8 +19,8 @@ Class representing package repositories.
 \item{\code{root}}{\code{\link{character}}.
 Repository's root path.}
 
-\item{\code{type}}{\code{\link{character}}.
-Repository path type.}
+\item{\code{Scheme}}{\code{\link{character}}.
+Repository URL scheme.}
 }}
 \section{Methods}{
 
@@ -32,7 +32,7 @@ Repository path type.}
 ##------------------------------------------------------------------------------
 
 ## Choose root directory //
-root <- file.path(tempdir(), "lcran")
+root <- file.path(tempdir(), "cran")
 
 ## Create instance //
 repo <- PackageRepository$new(root)
@@ -48,6 +48,10 @@ repo[[getOption("pkgType")]]
 repo$win.binary
 repo$mac.binary
 repo$source
+
+repo$scheme
+repo$normalize 
+repo$detect_scheme 
 
 ##------------------------------------------------------------------------------
 ## Top-level methods (in alphabetical order) //

@@ -1,4 +1,4 @@
-reposr (0.2.3)
+reposr (0.2.4)
 ======
 
 Local Package Repository Management

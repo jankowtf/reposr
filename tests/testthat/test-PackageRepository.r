@@ -211,6 +211,17 @@ test_that("PackageRepository/as URL/archive", {
 })
 
 ##------------------------------------------------------------------------------
+context("PackageRepository/as non-URL")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/as non-URL", {
+  
+  repo <- PackageRepository$new(file.path("file://", tempdir()))
+  expect_identical(repo$asNonUrl(), normalizePath(tempdir(), winslash = "/"))
+  
+})
+
+##------------------------------------------------------------------------------
 context("PackageRepository/browse")
 ##------------------------------------------------------------------------------
 
@@ -416,6 +427,46 @@ test_that("PackageRepository/exists/archive", {
   repo$ensure(archive = TRUE)
   expect_true(repo$exists(archive = TRUE))
   repo$delete(archive = TRUE, ask = FALSE)
+  
+})
+
+test_that("PackageRepository/exists/file", {
+  
+  root <- file.path("file://", tempdir(), "lcran")
+  repo <- PackageRepository$new(root = root)
+  repo$delete(ask = FALSE)
+  expect_false(repo$exists())
+  repo$ensure()
+  expect_true(repo$exists())
+  repo$delete(ask = FALSE)
+  
+})
+
+test_that("PackageRepository/exists/http", {
+  
+  root <- "http://cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  expect_false(repo$delete(ask = FALSE))
+  expect_false(repo$exists())
+  expect_error(repo$ensure())
+  if (FALSE) {
+    expect_true(repo$exists())
+    repo$delete(ask = FALSE)
+  }
+  
+})
+
+test_that("PackageRepository/exists/ftp", {
+  
+  root <- "ftp://cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  expect_false(repo$delete(ask = FALSE))
+  expect_false(repo$exists())
+  expect_error(repo$ensure())
+  if (FALSE) {
+    expect_true(repo$exists())
+    repo$delete(ask = FALSE)
+  }
   
 })
 
@@ -670,6 +721,26 @@ test_that("PackageRepository/show", {
   repo <- PackageRepository$new(root = root)
   expect_true(length(index <- repo$show()) > 0)
   expect_equal(index$Package, "dummy")    
+  
+})
+
+test_that("PackageRepository/show/file", {
+  
+  withConditionalWorkingDirectory(
+    root <- file.path("file://", getwd(), "data/lcran_2")
+  )
+  repo <- PackageRepository$new(root = root)
+  expect_true(length(index <- repo$show()) > 0)
+  expect_equal(index$Package, "dummy")    
+  
+})
+
+test_that("PackageRepository/show/http", {
+  
+  root <- "http://cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  expect_true(length(index <- repo$show()) > 0)
+  expect_true("devtools" %in% index$Package)    
   
 })
 
