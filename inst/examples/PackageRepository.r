@@ -3,7 +3,7 @@
 ##------------------------------------------------------------------------------
 
 ## Choose root directory //
-root <- file.path(tempdir(), "lcran")
+root <- file.path(tempdir(), "cran")
 
 ## Create instance //
 repo <- PackageRepository$new(root)
@@ -19,6 +19,10 @@ repo[[getOption("pkgType")]]
 repo$win.binary
 repo$mac.binary
 repo$source
+
+repo$scheme
+repo$normalize 
+repo$detect_scheme 
 
 ##------------------------------------------------------------------------------
 ## Top-level methods (in alphabetical order) //
