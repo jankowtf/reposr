@@ -30,8 +30,30 @@ test_that("PackageRepository/constructor/bare", {
 
   expect_is(res <- PackageRepository$new(), "PackageRepository")
   expect_true(!is.null(res$root))
-  expect_true(!is.null(res$type))
-  expect_identical(res$type, "fs")
+  expect_true(!is.null(res$scheme))
+  expect_identical(res$scheme, "none")
+  
+})
+
+test_that("PackageRepository/constructor/types", {
+  
+  expect_is(res <- PackageRepository$new(root = "a", 
+    normalize = FALSE, detect_scheme = FALSE), "PackageRepository")
+  
+  res$scheme <- "file"
+  expect_identical(res$root, "file:///a")
+  
+  res$scheme <- "http"
+  expect_identical(res$root, "http://a")
+  
+  res$scheme <- "ftp"
+  expect_identical(res$root, "ftp://a")
+  
+  res$scheme <- "none"
+  expect_identical(res$root, "a")
+  
+  res$scheme <- "invalid_type"
+  expect_error(res$root)
   
 })
 
@@ -40,29 +62,79 @@ test_that("PackageRepository/constructor/types", {
   expect_is(res <- PackageRepository$new(root = "a", 
     normalize = FALSE), "PackageRepository")
   
-  res$type <- "url_fs"
-  expect_identical(res$root, "file:///a")
-  
-  res$type <- "url_http"
-  expect_identical(res$root, "http://a")
-  
-  res$type <- "url_ftp"
-  expect_identical(res$root, "ftp://a")
-  
-  res$type <- "fs"
+  res$scheme <- "file"
   expect_identical(res$root, "a")
   
-  res$type <- "invalid_type"
+  res$scheme <- "http"
+  expect_identical(res$root, "a")
+  
+  res$scheme <- "ftp"
+  expect_identical(res$root, "a")
+  
+  res$scheme <- "none"
+  expect_identical(res$root, "a")
+  
+  res$scheme <- "invalid_type"
+  expect_identical(res$root, "a")
+  
+})
+
+test_that("PackageRepository/constructor/http", {
+  
+  root <- "http://cran.rstudio.com" 
+  expect_is(res <- PackageRepository$new(root = root), "PackageRepository")
+  expect_identical(res$root, root)
+  
+  res$scheme <- "file"
+  expect_identical(res$root, root)
+  
+  res$scheme <- "http"
+  expect_identical(res$root, root)
+  
+  res$scheme <- "ftp"
+  expect_identical(res$root, root)
+  
+  res$scheme <- "none"
+  expect_identical(res$root, root)
+  
+  res$scheme <- "invalid_type"
+  expect_identical(res$root, root)
+  
+})
+
+test_that("PackageRepository/constructor/http/no scheme derivation", {
+  
+  root <- "http://cran.rstudio.com" 
+  root_noscheme <- gsub("http://", "", root)
+  
+  expect_is(res <- PackageRepository$new(root = root, detect_scheme = FALSE), 
+    "PackageRepository")
+  expect_identical(res$root, file.path(getwd(), root_noscheme))
+  
+  res$scheme <- "file"
+  expect_identical(res$root, file.path("file://", getwd(), root_noscheme))
+  
+  res$scheme <- "http"
+  expect_identical(res$root, file.path("http:/", root_noscheme))
+  
+  res$scheme <- "ftp"
+  expect_identical(res$root, file.path("ftp:/", root_noscheme))
+  
+  res$scheme <- "none"
+  expect_identical(res$root, file.path(getwd(), root_noscheme))
+  
+  res$scheme <- "invalid_type"
   expect_error(res$root)
+  
 })
 
 test_that("PackageRepository/constructor/fields", {
   
   expect_is(res <- PackageRepository$new(
-    root = "a/b/c", type = "fs"), "PackageRepository")
+    root = "a/b/c", scheme = "none"), "PackageRepository")
   expect_identical(res$root, normalizePath("a/b/c", winslash = "/", 
     mustWork = FALSE))
-  expect_identical(res$type, "fs")
+  expect_identical(res$scheme, "none")
   
 })
 
@@ -702,6 +774,34 @@ test_that("PackageRepository/private/derive root", {
     ),
     "c:/temp/cran"
   )
+  
+})
+
+##------------------------------------------------------------------------------
+context("PackageRepository/private/detect scheme")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/private/detect scheme", {
+  
+  root <- "http://cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  private <- environment(repo$ensure)$private
+  expect_identical(private$detectScheme(repo$root), "http")
+  
+  root <- "ftp://cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  private <- environment(repo$ensure)$private
+  expect_identical(private$detectScheme(repo$root), "ftp")
+  
+  root <- "file://cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  private <- environment(repo$ensure)$private
+  expect_identical(private$detectScheme(repo$root), "file")
+  
+  root <- "cran.rstudio.com"
+  repo <- PackageRepository$new(root = root)
+  private <- environment(repo$ensure)$private
+  expect_identical(private$detectScheme(repo$root), "none")
   
 })
 

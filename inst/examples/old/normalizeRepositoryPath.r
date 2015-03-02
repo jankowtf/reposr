@@ -12,21 +12,21 @@ normalizeRepositoryPath(repos = repos)
 ## URL (file system) //
 ##------------------------------------------------------------------------------
 
-res <- normalizeRepositoryPath(repos = repos, type = "url_fs")
-normalizeRepositoryPath(repos = res, type = "url_fs")
+res <- normalizeRepositoryPath(repos = repos, type = "file")
+normalizeRepositoryPath(repos = res, type = "file")
 
 ##------------------------------------------------------------------------------
 ## URL (http)
 ##------------------------------------------------------------------------------
 
-normalizeRepositoryPath(repos = repos, type = "url_http")
+normalizeRepositoryPath(repos = repos, type = "http")
 
 ##------------------------------------------------------------------------------
 ## URL (ftp) //
 ##------------------------------------------------------------------------------
   
-res <- normalizeRepositoryPath(repos = repos, type = "url_ftp")
-normalizeRepositoryPath(repos = res, type = "url_ftp")  
+res <- normalizeRepositoryPath(repos = repos, type = "ftp")
+normalizeRepositoryPath(repos = res, type = "ftp")  
 
 \dontrun{
   
