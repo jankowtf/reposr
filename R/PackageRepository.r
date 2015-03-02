@@ -64,6 +64,13 @@ PackageRepository <- R6Class(
       }
       out
     },
+    asNonUrl = function(
+      archive = FALSE
+    ) {
+      this <- if (!archive) self else PackageRepository$new(self$root_archive)
+      root <- this$root
+      private$.asNonUrl(root)
+    },
     browse = function(
       type = c("", private$subdirs),
       strict = private$strict,
@@ -179,14 +186,21 @@ PackageRepository <- R6Class(
       plain = FALSE
     ) {
       this <- if (!archive) self else PackageRepository$new(self$root_archive)
-      path <- this$root
-      if (!file.exists(path)) {
+      root <- this$root
+      scheme <- private$detectScheme(root)
+      if (scheme %in% c("none", "file")) {
+        root <- private$.asNonUrl(root)
+        idx <- file.exists(root)
+      } else {
+        idx <- private$respondsUrl(root)
+      }
+      if (!idx) {
         if (strict == 1) {
           conditionr::signalCondition(
             condition = "NegativeExistenceCheck",
             msg = c(
               "Repository does not exist",
-              Path = path
+              Path = root
             ),
             type = "message"
           )
@@ -195,7 +209,7 @@ PackageRepository <- R6Class(
             condition = "NegativeExistenceCheck",
             msg = c(
               "Repository does not exist",
-              Path = path
+              Path = root
             ),
             type = "warning"
           )
@@ -204,7 +218,7 @@ PackageRepository <- R6Class(
             condition = "NegativeExistenceCheck",
             msg = c(
               "Repository does not exist",
-              Path = path
+              Path = root
             ),
             type = "error"
           )
@@ -213,7 +227,7 @@ PackageRepository <- R6Class(
           if (plain) {
             FALSE
           } else {
-            structure(FALSE, names = path)
+            structure(FALSE, names = root)
           }
         )
       }
@@ -222,7 +236,7 @@ PackageRepository <- R6Class(
           condition = "VerifyDeleteOperation",
           msg = c(
             "Verify repository deletion",
-            Path = path
+            Path = root
           ),
           type = "message"
         )
@@ -233,15 +247,27 @@ PackageRepository <- R6Class(
           return(if (plain) {
             FALSE
           } else {
-            structure(FALSE, names = path)
+            structure(FALSE, names = root)
           })
         }
       }
-      unlink(path, recursive = TRUE, force = TRUE)
+      if (scheme %in% c("none", "file")) {
+        unlink(root, recursive = TRUE, force = TRUE)
+      } else {
+        conditionr::signalCondition(
+          condition = "DeletionOfRemoteNotSupportedYet",
+          msg = c(
+            "Deletion of remote repositories not supported yet",
+            Root = root,
+            Suggestions = "delete manually or via FTP client"
+          ),
+          type = "error"
+        )
+      }
       if (plain) {
         TRUE
       } else {
-        structure(TRUE, names = path)
+        structure(TRUE, names = root)
       }
     },
     #' @import miniCRAN
@@ -286,14 +312,14 @@ PackageRepository <- R6Class(
       plain = FALSE
     ) {
       this <- if (!archive) self else PackageRepository$new(self$root_archive)
-      path <- this$root
-      if (overwrite && file.exists(path)) {
+      root <- this$root
+      if (overwrite && file.exists(root)) {
         if (ask) {
           conditionr::signalCondition(
             condition = "VerifyOverwriteOperation",
             msg = c(
               "Verify repository overwrite",
-              Path = path
+              Root = root
             ),
             type = "message"
           )
@@ -304,21 +330,35 @@ PackageRepository <- R6Class(
             return(if (plain) {
               FALSE 
             } else {
-              structure(FALSE, names = path)
+              structure(FALSE, names = root)
             })
           }
         }
         self$delete(ask = FALSE, plain = plain)
       } 
-      subdirs <- sapply(private$subdirs, function(ii) {
-        this[[ii]]
-      })
-      sapply(subdirs, dir.create, recursive = TRUE, showWarnings = FALSE)
+      scheme <- private$detectScheme(root)
+      if (scheme %in% c("none", "file")) {
+        subdirs <- sapply(private$subdirs, function(ii) {
+          this[[ii]]
+        })
+        subdirs <- private$.asNonUrl(subdirs)
+        sapply(subdirs, dir.create, recursive = TRUE, showWarnings = FALSE)
+      } else {
+        conditionr::signalCondition(
+          condition = "EnsuranceOfRemoteNotSupportedYet",
+          msg = c(
+            "Ensurance of remote repositories not supported yet",
+            Root = root,
+            Suggestions = "ensure manually or via FTP client"
+          ),
+          type = "error"
+        )
+      }
       private$ensureIndexFiles(archive = archive)
       if (plain) {
         TRUE
       } else {
-        structure(TRUE, names = path)
+        structure(TRUE, names = root)
       }
     },
     exists = function(
@@ -327,20 +367,29 @@ PackageRepository <- R6Class(
       plain = FALSE
     ) {
       this <- if (!archive) self else PackageRepository$new(self$root_archive)
-      path <- this$root
-      if (!file.exists(path)) {
+      root <- this$root
+      scheme <- private$detectScheme(root)
+      if (scheme %in%  c("none", "file")) {
+        if (scheme == "file") {
+          root <- private$.asNonUrl(root)
+        } 
+        idx <- file.exists(root)
+      } else {
+        idx <- private$respondsUrl(root)
+      }
+      if (!idx) {
         if (!strict) {
           if (plain) {
             FALSE
           } else {
-            structure(FALSE, names = path)
+            structure(FALSE, names = root)
           }
         } else {
           conditionr::signalCondition(
             condition = "InvalidPackageRepositoryLocation",
             msg = c(
               "Package repository directory does not exist",
-              Path = path
+              Root = root
             ),
             type = "error"
           )
@@ -349,9 +398,9 @@ PackageRepository <- R6Class(
         if (plain) {
           TRUE
         } else {
-          structure(TRUE, names = path)
+          structure(TRUE, names = root)
         }
-      }   
+      }
     },
     export = function(
       pkg = character(),
@@ -701,6 +750,9 @@ PackageRepository <- R6Class(
         force
       }
     },
+    .asNonUrl = function(value) {
+      gsub("///?", "", gsub("^.*/?(?=//)", "", value, perl = TRUE))
+    },
     detectScheme = function(
       input
     ) {
@@ -737,36 +789,50 @@ PackageRepository <- R6Class(
       subdirs <- sapply(private$subdirs, function(ii) {
         this[[ii]]
       }, USE.NAMES = FALSE)
-      out <- sapply(seq(along = subdirs), function(ii) {     
-        path <- subdirs[[ii]]
-        type <- names(subdirs[ii])
-        fpath <- file.path(path, c("PACKAGES", "PACKAGES.gz"))
-        out <- if (!all(file.exists(fpath)) | overwrite) {
-          wd_0   <- getwd()
-          on.exit(setwd(wd_0))
-          tryCatch({
-            setwd(path)
-            #         tools::write_PACKAGES(".", type=.Platform$pkgType)
-            tools::write_PACKAGES(".", type = type)         
+      scheme <- private$detectScheme(self$root)
+      if (scheme %in% c("none", "file")) {
+        subdirs <- private$.asNonUrl(subdirs)
+        out <- sapply(seq(along = subdirs), function(ii) {     
+          path <- subdirs[[ii]]
+          type <- names(subdirs[ii])
+          fpath <- file.path(path, c("PACKAGES", "PACKAGES.gz"))
+          out <- if (!all(file.exists(fpath)) | overwrite) {
+            wd_0   <- getwd()
+            on.exit(setwd(wd_0))
+            tryCatch({
+              setwd(path)
+              #         tools::write_PACKAGES(".", type=.Platform$pkgType)
+              tools::write_PACKAGES(".", type = type)         
+              TRUE
+            },
+            error = function(cond) {
+              message(conditionMessage(cond))
+              FALSE
+            },
+            warning = function(cond) {
+              message(conditionMessage(cond))
+              TRUE
+            },
+            finally = setwd(wd_0)
+            )
+          } else {
             TRUE
-          },
-          error = function(cond) {
-            message(conditionMessage(cond))
-            FALSE
-          },
-          warning = function(cond) {
-            message(conditionMessage(cond))
-            TRUE
-          },
-          finally = setwd(wd_0)
-          )
-        } else {
-          TRUE
-        }
-        names(out) <- path
+          }
+          names(out) <- path
+          out
+        })
         out
-      })
-      out
+      } else {
+        conditionr::signalCondition(
+          condition = "EnsuranceOfRemoteNotSupportedYet",
+          msg = c(
+            "Ensurance of index files in remote repositories not supported yet",
+            Root = root,
+            Suggestions = "ensure manually or via FTP client"
+          ),
+          type = "error"
+        )
+      }
     },
     getLatestPackages = function(
       type = private$subdirs,
@@ -909,6 +975,7 @@ PackageRepository <- R6Class(
       type = getOption("pkgType")
     ) {
       self$exists(strict = TRUE)
+      
       type <- match.arg(type, private$subdirs)
       fname <- "PACKAGES"
       fpath <- if (type == "mac.binary") {
@@ -918,9 +985,13 @@ PackageRepository <- R6Class(
       } else if (type == "source") {
         file.path(self$source, fname)  
       }
+      scheme <- private$detectScheme(self$root)
+      if (scheme == "file") {
+        fpath <- private$.asNonUrl(fpath)
+      } else {
+        fpath <- url(fpath)
+      } 
       dcf <- as.data.frame(read.dcf(fpath), stringsAsFactors = FALSE)
-      #       dcf <- addClassAttribute(obj = dcf, 
-      #         class_name = "RappParsedPackageRepositoryIndexS3")
       dcf
     },
     processUserInput = function(input, dflt = "yes") {
@@ -935,6 +1006,9 @@ PackageRepository <- R6Class(
         message(paste0("Invalid input: ", input))
         NULL
       }
+    },
+    respondsUrl = function(x) {
+      inherits(try(readLines(x)), "try-error")
     },
     validateExistence = function(
       strict = 0:3
