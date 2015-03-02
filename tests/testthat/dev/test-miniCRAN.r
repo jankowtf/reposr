@@ -70,7 +70,7 @@ test_that("PackageRepository/constructor/bare", {
   expect_is(res <- PackageRepository$new(), "PackageRepository")
   expect_true(!is.null(res$root))
   expect_true(!is.null(res$type))
-  expect_identical(res$type, "fs")
+  expect_identical(res$type, "none")
   
 })
 

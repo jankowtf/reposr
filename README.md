@@ -1,4 +1,4 @@
-reposr (0.2.2)
+reposr (0.2.3)
 ======
 
 Local Package Repository Management
@@ -26,6 +26,20 @@ root <- file.path(tempdir(), "cran")
 
 ```
 repo <- PackageRepository$new(root)
+```
+
+### Remote repositories
+
+Note that, even though the package has **not** been specifically designed to express non-local repositories, remote repositories can also be handled. However, keep in mind that not all methods will work for remote repositories (e.g. `$show()`)
+
+```
+repo_http <- PackageRepository$new("http://cran.rstudio.com")
+repo_http
+repo_http$scheme
+
+repo_ftp <- PackageRepository$new("ftp://cran.rstudio.com")
+repo_ftp
+repo_ftp$scheme
 ```
 
 ### Create/ensure repository

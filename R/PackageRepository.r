@@ -9,8 +9,8 @@
 #'    
 #' @field root \code{\link{character}}.
 #'  Repository's root path.
-#' @field type \code{\link{character}}.
-#'  Repository path type.
+#' @field Scheme \code{\link{character}}.
+#'  Repository URL scheme.
 #' @example inst/examples/PackageRepository.r
 #' @template author
 #' @template references
@@ -27,18 +27,21 @@ PackageRepository <- R6Class(
   ##----------------------------------------------------------------------------
   
   public = list(
-    type = "character",
-    normalize = "logical",
+    scheme = "none",
+    normalize = TRUE,
+    detect_scheme = TRUE,
     initialize = function(
       root = "lcran",
-      type = c("fs", "url_fs", "url_http", "url_ftp"),
-      normalize = TRUE
+      scheme = c("none", "file", "http", "ftp"),
+      normalize = TRUE,
+      detect_scheme = TRUE
     ) {
-      type <- match.arg(type, c("fs", "url_fs", "url_http", "url_ftp"))
-      self$type <- type
+      scheme <- match.arg(scheme, c("none", "file", "http", "ftp"))
+      self$scheme <- scheme
       private$subdirs <- c("mac.binary", "source", "win.binary")
       private$.root <- root
       self$normalize <- normalize
+      self$detect_scheme <- detect_scheme
     },
     asUrl = function(
       scheme = c("file", "http", "ftp"),
@@ -698,6 +701,19 @@ PackageRepository <- R6Class(
         force
       }
     },
+    detectScheme = function(
+      input
+    ) {
+      if (grepl("http://", input)) {
+        "http"
+      } else if (grepl("ftp://", input)) {
+        "ftp"
+      } else if (grepl("file://", input)) {
+        "file"
+      } else {
+        "none"
+      }
+    },
     deriveRoot = function(
       input,
       type = getOption("pkgType")
@@ -819,7 +835,7 @@ PackageRepository <- R6Class(
         self$refresh()
       }
       subdirs <- private$getSubDirs(type)
-      ii=2
+
       ## Loop over subdirs //
       out <- lapply(seq(along = subdirs), function(ii) {
         type <- names(subdirs[ii])
@@ -970,28 +986,35 @@ PackageRepository <- R6Class(
         private$.root <- value  
       } 
       value <- private$.root
-      type <- self$type
+      scheme <- self$scheme
+      scheme_det <- private$detectScheme(value)
+      if (scheme_det != scheme && self$detect_scheme) {
+        scheme <- scheme_det
+        self$scheme <- scheme_det
+      }
+      
       normalize <- self$normalize
-      repos_raw <- gsub("///", "", gsub("^.*(?=///)", "", value, perl = TRUE))
-      if (normalize) {
+#       repos_raw <- gsub("///", "", gsub("^.*(?=///)", "", value, perl = TRUE))
+      repos_raw <- gsub("///?", "", gsub("^.*/?(?=//)", "", value, perl = TRUE))
+      if (normalize && !scheme %in% c("http", "ftp")) {
         repos_raw <- normalizePath(repos_raw, winslash = "/", mustWork = FALSE)
       }
-      out <- if (type == "fs") {
+      out <- if (scheme == "none") {
         repos_raw
-      } else if (type == "url_fs") {
+      } else if (scheme == "file") {
         paste0("file:///", repos_raw)
-      } else if (type == "url_http"){
+      } else if (scheme == "http"){
         paste0("http://", repos_raw)
-      } else if (type == "url_ftp"){
+      } else if (scheme == "ftp"){
         paste0("ftp://", repos_raw)
       } else {
         conditionr::signalCondition(
           call = quote(self$root),
           condition = "InvalidRepositoryPathType",
           msg = c(
-            "Invalid type",
-            Type = type,
-            Valid = paste(c("fs", "url_fs", "url_http", "url_ftp"),
+            "Invalid scheme",
+            Scheme = scheme,
+            Valid = paste(c("none", "file", "http", "ftp"),
                              collapse = ", ")
           ),
           type = "error"
