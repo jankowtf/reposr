@@ -609,6 +609,7 @@ test_that("PackageRepository/pull", {
   repo_rappster <- PackageRepository$new(
     root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
   repo_rappster$register()
+
   expect_true(repo$pull())
   expect_true(length(list.files(repo$source)) >= 25)
   repo_rappster$unregister()
@@ -791,6 +792,35 @@ test_that("PackageRepository/show/http", {
   repo <- PackageRepository$new(root = root)
   expect_true(length(index <- repo$show()) > 0)
   expect_true("devtools" %in% index$Package)    
+  
+})
+
+##------------------------------------------------------------------------------
+context("PackageRepository/showRegistered")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/showRegistered", {
+  
+  repo <- PackageRepository$new()
+  repo$register()
+  expect_identical(repo$showRegistered(),
+    c(CRAN = file.path("file://", getwd(), "cran"),
+      CRAN = "http://cran.rstudio.com",
+      CRANextra = "http://www.stats.ox.ac.uk/pub/RWin"
+    )
+  )
+  expect_identical(repo$showRegistered(custom_only = TRUE),
+    c(CRAN = file.path("file://", getwd(), "cran"))
+  )
+  repo$unregister()
+  expect_identical(repo$showRegistered(),
+    c(CRAN = "http://cran.rstudio.com",
+      CRANextra = "http://www.stats.ox.ac.uk/pub/RWin"
+    )
+  )
+  expect_identical(repo$showRegistered(custom_only = TRUE),
+    structure(character(), names = character())
+  )
   
 })
 

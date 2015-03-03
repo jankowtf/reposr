@@ -28,20 +28,20 @@ test_that("packrat", {
   self=repo
   private = environment(self$ensure)$private
   
-path_src <- file.path(tempdir(), "test.txt")
-write("Hello World!", file = path_src)
-path_tgt <- file.path(tempdir(), "test_symlink.txt")
-shell(sprintf("mklink /H %s %s", 
-  normalizePath(path_tgt, mustWork = FALSE),
-  normalizePath(path_src)
-))
-write("HELLO WORLD!", file = path_src, append = TRUE)
-  
-path_tgt_2 <- file.path(tempdir(), "test_symlink_2.txt")
-shell(sprintf("mklink /D %s %s", 
-  normalizePath(path_tgt_2, mustWork = FALSE),
-  normalizePath(path_src)
-))
+  path_src <- file.path(tempdir(), "test.txt")
+  write("Hello World!", file = path_src)
+  path_tgt <- file.path(tempdir(), "test_symlink.txt")
+  shell(sprintf("mklink /H %s %s", 
+    normalizePath(path_tgt, mustWork = FALSE),
+    normalizePath(path_src)
+  ))
+  write("HELLO WORLD!", file = path_src, append = TRUE)
+    
+  path_tgt_2 <- file.path(tempdir(), "test_symlink_2.txt")
+  shell(sprintf("mklink /D %s %s", 
+    normalizePath(path_tgt_2, mustWork = FALSE),
+    normalizePath(path_src)
+  ))
   
 })
 

@@ -1,4 +1,4 @@
-reposr (0.2.5)
+reposr (0.2.6)
 ======
 
 Local Package Repository Management
@@ -62,7 +62,7 @@ The package offers a built-in way to archive packages. This is important for two
     
     While your repository will at some point thus contain multiple builds, be aware that only the latest build will be reflected in the repository index file. Thus, when you decide to "clean up" at some point, running `$clean(archive = TRUE)`) will make sure that all the outdated builds are not lost but moved to the archive where each version gets its own CRAN-like repository.
     
-2. Method `$atomarize()` atomarizes the content of a repository in the sense that a own repository for each package's version is ensured below the repository archive's root directory.
+2. Method `$atomize()` atomarizes the content of a repository in the sense that a own repository for each package's version is ensured below the repository archive's root directory.
 
 To summarize, the structure of the repository archive is as follows:
 
@@ -97,6 +97,13 @@ Register:
 getOption("repos")
 repo$register()
 getOption("repos")
+```
+
+See what's currently registered:
+
+```
+repo$showRegistered()
+repo$showRegistered(custom_only = TRUE)
 ```
 
 Unegister:
@@ -204,6 +211,20 @@ Ensure that repository is atomized after pull (atomic package-version-specific r
 
 ```
 repo$pull(atomize = TRUE)
+```
+
+### Atomize (explicit)
+
+Atomize repository content so each package version gets its version-specific repository in the repository archive:
+
+```
+repo$atomize()
+```
+
+Browse repository archive:
+
+```
+repo$browse(archive = TRUE)
 ```
 
 ### Export 
