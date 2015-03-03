@@ -58,6 +58,7 @@ PackageRepository <- R6Class(
         root <- "packrat/cran"
       }
       private$.root <- root
+      private$ensureOptions()
     },
     asUrl = function(
       scheme = c("file", "http", "ftp"),
@@ -86,6 +87,64 @@ PackageRepository <- R6Class(
       this <- if (!archive) self else PackageRepository$new(self$root_archive)
       root <- this$root
       private$.asNonUrl(root)
+    },
+    atomize = function(
+#       pkgs = list(),
+      type = private$subdirs,
+      symlink = FALSE,
+      overwrite = FALSE,
+      refresh = FALSE
+    ) {
+#       if (!length(pkgs)) {
+        pkgs <- private$getLatestPackages(type = type, refresh = refresh)  
+#       }
+      out <- lapply(pkgs, function(ii) {
+        if (nrow(ii)) {
+          sapply(1:nrow(ii), function(row) {
+            pkg <- ii[row,]
+            root_target <- file.path(
+              self$root_archive, 
+              pkg$name,
+              pkg$version
+            )
+            tmp <- PackageRepository$new(root = root_target)
+            path_tgt <- file.path(tmp[[pkg$type]], basename(pkg$fpath))
+            if (!symlink) {
+              tmp$ensure()
+              file.copy(
+                pkg$fpath, 
+                path_tgt,
+                overwrite = overwrite
+              )
+              tmp$refresh()
+            } else {
+              tmp$ensure(index = FALSE)
+              ## Index files //
+              environment(tmp$ensure)$private$ensureIndexFileSymlinks(
+                root_src = self$root,
+                overwrite = overwrite
+              )
+              ## Package builds //
+              if (getOption("pkgType") == "win.binary") {
+                if (file.exists(path_tgt) && overwrite) {
+                  unlink(path_tgt, force = TRUE)
+                }
+                capture.output(shell(sprintf("mklink /H %s %s", 
+                  normalizePath(path_tgt, mustWork = FALSE),
+                  normalizePath(pkg$fpath, mustWork = FALSE)
+                ), intern = TRUE))
+              } else {
+                stop("Symbolic links not supported for this OS yet")
+              }
+            }
+            structure(TRUE, names = sprintf("%s_%s", pkg$name, pkg$version))
+          })
+        } else {
+          FALSE
+        }
+      })
+      names(out) <- type
+      out
     },
     browse = function(
       type = c("", private$subdirs),
@@ -579,7 +638,7 @@ PackageRepository <- R6Class(
           type = ii, download = TRUE))
         private$pullInternalPackages(deps = deps, type = ii)
         if (atomize) {
-          private$atomarizeRepositoryContent(type = ii, symlink = symlink)                       
+          self$atomize(type = ii, symlink = symlink)                       
         }
       })
       self$refresh()
@@ -595,9 +654,9 @@ PackageRepository <- R6Class(
     ) {
       repo <- self$asUrl()
       current <- getOption("repos")
-      if (!length(private$.roption_repo_cache)) {
-        private$.roption_repo_cache <- current
-      }
+#       if (!length(private$.roption_repo_cache)) {
+#         private$.roption_repo_cache <- current
+#       }
       if (!repo %in% current) {
         updated <- if (before_cran) {
           c(structure(repo, names = name), current)
@@ -708,14 +767,26 @@ PackageRepository <- R6Class(
     ) {
       private$parseIndexFile(type = type)
     },
+    showRegistered = function(
+      custom_only = FALSE
+    ) {
+      out <- getOption("repos")
+      if (custom_only) {
+        standard <- getOption("reposr")$repos_0
+        out <- out[!out %in% standard]
+      }
+      out
+    },
     unregister = function(
       reset = FALSE
     ) {
       repo <- self$asUrl()
       if (reset) {
-        if (length(private$.roption_repo_cache)) {
-          options("repos" = private$.roption_repo_cache)
-          private$.roption_repo_cache <- character()
+#         if (length(private$.roption_repo_cache)) {
+        if (length(repos_0 <- getOption("reposr")$repos_0)) {          
+#           options("repos" = private$.roption_repo_cache)
+#           private$.roption_repo_cache <- character()
+          options("repos" = repos_0)
           TRUE
         } else {
           FALSE
@@ -807,64 +878,6 @@ PackageRepository <- R6Class(
     },
     .asNonUrl = function(value) {
       gsub("///?", "", gsub("^.*/?(?=//)", "", value, perl = TRUE))
-    },
-    atomarizeRepositoryContent = function(
-      pkgs = list(),
-      type = private$subdirs,
-      symlink = FALSE,
-      overwrite = FALSE,
-      refresh = FALSE
-    ) {
-      if (!length(pkgs)) {
-        pkgs <- private$getLatestPackages(type = type, refresh = refresh)  
-      }
-      out <- lapply(pkgs, function(ii) {
-        if (nrow(ii)) {
-          sapply(1:nrow(ii), function(row) {
-            pkg <- ii[row,]
-            root_target <- file.path(
-              self$root_archive, 
-              pkg$name,
-              pkg$version
-            )
-            tmp <- PackageRepository$new(root = root_target)
-            path_tgt <- file.path(tmp[[pkg$type]], basename(pkg$fpath))
-            if (!symlink) {
-              tmp$ensure()
-              file.copy(
-                pkg$fpath, 
-                path_tgt,
-                overwrite = overwrite
-              )
-              tmp$refresh()
-            } else {
-              tmp$ensure(index = FALSE)
-              ## Index files //
-              environment(tmp$ensure)$private$ensureIndexFileSymlinks(
-                root_src = self$root,
-                overwrite = overwrite
-              )
-              ## Package builds //
-              if (getOption("pkgType") == "win.binary") {
-                if (file.exists(path_tgt) && overwrite) {
-                  unlink(path_tgt, force = TRUE)
-                }
-                capture.output(shell(sprintf("mklink /H %s %s", 
-                  normalizePath(path_tgt, mustWork = FALSE),
-                  normalizePath(pkg$fpath, mustWork = FALSE)
-                ), intern = TRUE))
-              } else {
-                stop("Symbolic links not supported for this OS yet")
-              }
-            }
-            structure(TRUE, names = sprintf("%s_%s", pkg$name, pkg$version))
-          })
-        } else {
-          FALSE
-        }
-      })
-      names(out) <- type
-      out
     },
     createFakeRepoIndex = function() {
       deps <- private$getDependenciesFromDescription()
@@ -1046,6 +1059,15 @@ PackageRepository <- R6Class(
         )
       }
       out
+    },
+    ensureOptions = function() {
+      cont <- getOption("reposr")
+      if (is.null(cont)) {
+        cont <- new.env(parent = emptyenv())
+        cont$repos_0 <- getOption("repos")
+        options(reposr = cont)
+      }
+      TRUE
     },
     ensurePackageInIndex = function(
       type = c("source", getOption("pkgType"))
