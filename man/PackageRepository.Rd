@@ -4,7 +4,7 @@
 \name{PackageRepository}
 \alias{PackageRepository}
 \title{Class: PackageRepository}
-\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x0000000006a89ae8> 
+\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x00000000082a90a0> 
  - attr(*, "name")= chr "PackageRepository_generator"
 }}
 \usage{
@@ -19,8 +19,21 @@ Class representing package repositories.
 \item{\code{root}}{\code{\link{character}}.
 Repository's root path.}
 
-\item{\code{Scheme}}{\code{\link{character}}.
+\item{\code{scheme}}{\code{\link{character}}.
 Repository URL scheme.}
+
+\item{\code{normalize}}{\code{\link{logical}}.
+\code{TRUE}: normalize repository root;
+\code{FALSE}: take repository root "as is" (for relative paths).}
+
+\item{\code{detect_scheme}}{\code{\link{logical}}.
+\code{TRUE}: detect scheme from repository root;
+\code{FALSE}: no scheme detection.}
+
+\item{\code{packrat}}{\code{\link{logical}}.
+\code{TRUE}: a project-based package repository is created that
+integrates seamlessly with \href{packrat}{https://github.com/rstudio/packrat};
+\code{FALSE}: no project-based repository is created.}
 }}
 \section{Methods}{
 
