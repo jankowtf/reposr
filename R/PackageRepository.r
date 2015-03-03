@@ -9,8 +9,18 @@
 #'    
 #' @field root \code{\link{character}}.
 #'  Repository's root path.
-#' @field Scheme \code{\link{character}}.
+#' @field scheme \code{\link{character}}.
 #'  Repository URL scheme.
+#' @field normalize \code{\link{logical}}.
+#'  \code{TRUE}: normalize repository root; 
+#'  \code{FALSE}: take repository root "as is" (for relative paths).
+#' @field detect_scheme \code{\link{logical}}.
+#'  \code{TRUE}: detect scheme from repository root; 
+#'  \code{FALSE}: no scheme detection.
+#' @field packrat \code{\link{logical}}.
+#'  \code{TRUE}: a project-based package repository is created that 
+#'  integrates seamlessly with \href{packrat}{https://github.com/rstudio/packrat}; 
+#'  \code{FALSE}: no project-based repository is created.
 #' @example inst/examples/PackageRepository.r
 #' @template author
 #' @template references
@@ -22,26 +32,32 @@ PackageRepository <- R6Class(
   classname = "PackageRepository",
   portable = TRUE,
   
-  ##----------------------------------------------------------------------------
+  ##############################################################################
   ## Public //
-  ##----------------------------------------------------------------------------
+  ##############################################################################
   
   public = list(
     scheme = "none",
     normalize = TRUE,
     detect_scheme = TRUE,
+    packrat = FALSE,
     initialize = function(
-      root = "lcran",
+      root = "cran",
       scheme = c("none", "file", "http", "ftp"),
       normalize = TRUE,
-      detect_scheme = TRUE
+      detect_scheme = TRUE,
+      packrat = FALSE
     ) {
       scheme <- match.arg(scheme, c("none", "file", "http", "ftp"))
       self$scheme <- scheme
       private$subdirs <- c("mac.binary", "source", "win.binary")
-      private$.root <- root
       self$normalize <- normalize
       self$detect_scheme <- detect_scheme
+      self$packrat <- packrat
+      if (packrat) {
+        root <- "packrat/cran"
+      }
+      private$.root <- root
     },
     asUrl = function(
       scheme = c("file", "http", "ftp"),
@@ -272,26 +288,56 @@ PackageRepository <- R6Class(
     },
     #' @import miniCRAN
     dependsOn = function(
-      pkg = private$getPackageName(),
+      pkg = private$getFromDescription("Package"),
       type = getOption("pkgType"),
       local_only = FALSE,
       depends = TRUE,
       suggests = TRUE,
       enhances = FALSE,
       register = FALSE,
+      strict = 3,
       ...
     ) {
+      strict <- as.numeric(match.arg(as.character(strict), as.character(0:3)))
       if (!self$has(pkg)) {
-        conditionr::signalCondition(
-          condition = "InvalidPackageOrRepo",
-          msg = c(
-            "Invalid package(s) or repo",
-            Repository = self$root,
-            Type = type,
-            Packages = paste(pkg, collapse = ", ")
-          ),
-          type = "error"
-        )
+        if (strict == 1) {
+          conditionr::signalCondition(
+            condition = "InvalidPackageOrRepo",
+            msg = c(
+              "Invalid package(s) or repo",
+              Repository = self$root,
+              Type = type,
+              Packages = paste(pkg, collapse = ", "),
+              "Trying to build..."
+            ),
+            type = "message"
+          )
+        } else if (strict == 2) {
+          conditionr::signalCondition(
+            condition = "InvalidPackageOrRepo",
+            msg = c(
+              "Invalid package(s) or repo",
+              Repository = self$root,
+              Type = type,
+              Packages = paste(pkg, collapse = ", "),
+              "Trying to build..."
+            ),
+            type = "warning"
+          )
+        } else if (strict == 3) {
+          conditionr::signalCondition(
+            condition = "InvalidPackageOrRepo",
+            msg = c(
+              "Invalid package(s) or repo",
+              Repository = self$root,
+              Type = type,
+              Packages = paste(pkg, collapse = ", ")
+            ),
+            type = "error"
+          )
+        }
+        private$ensurePackageInIndex()
+#         repo$buildInto()
       }
       repo <- if (!local_only) {
         getOption("repos")
@@ -309,7 +355,8 @@ PackageRepository <- R6Class(
       archive = FALSE,
       overwrite = FALSE, 
       ask = TRUE, 
-      plain = FALSE
+      plain = FALSE,
+      index = TRUE
     ) {
       this <- if (!archive) self else PackageRepository$new(self$root_archive)
       root <- this$root
@@ -354,7 +401,9 @@ PackageRepository <- R6Class(
           type = "error"
         )
       }
-      private$ensureIndexFiles(archive = archive)
+      if (index) {
+        private$ensureIndexFiles(archive = archive)
+      }
       if (plain) {
         TRUE
       } else {
@@ -432,7 +481,7 @@ PackageRepository <- R6Class(
       }
     },
     visualizeDependencies = function(
-      pkg = private$getPackageName(),
+      pkg = private$getFromDescription("Package"),
       export = character(),
       ...
     ) {
@@ -477,7 +526,7 @@ PackageRepository <- R6Class(
       out
     },
     has = function(
-      pkg = private$getPackageName(),
+      pkg = private$getFromDescription("Package"),
       type = getOption("pkgType"),
       atomic = TRUE
     ) {
@@ -511,33 +560,26 @@ PackageRepository <- R6Class(
       out
     },
     pull = function(
-      pkg = private$getPackageName(),
-      type = c(getOption("pkgType"), "source")
+      pkg = private$getFromDescription("Package"),
+      type = c("source", getOption("pkgType")),
+#       ensure_build = FALSE,
+      atomize = FALSE,
+      symlink = FALSE
     ) {
       self$ensure()
       self$register()
-      deps <- self$dependsOn(pkg)
+#       deps <- self$dependsOn(pkg, strict = if (!ensure_build) 3 else 0)
+      deps <- self$dependsOn(pkg, strict = 0)
+      
+      ## Internal/additional/non-CRAN packages //
+      private$ensureAdditionalRepositories(deps = deps)
+# getOption("repos")
       sapply(type, function(ii) {
-        suppressWarnings(makeRepo(deps, path = self$root, 
+        suppressWarnings(miniCRAN::makeRepo(deps, path = self$root, 
           type = ii, download = TRUE))
-        pkg_local <- setdiff(deps, self$show(type = ii)$Package)
-        if (length(pkg_local)) {
-          ## Local CRANs //
-          repos_local <- grep("file://", getOption("repos"), value = TRUE)
-          pkgs_local <- pkgAvail(repos = repos_local, type = ii)  
-          sapply(pkg_local, function(ii_2) {
-            tmp <- pkgs_local[which(pkgs_local[, "Package"] %in% ii_2), , drop = FALSE]  
-            if (!nrow(tmp)) {
-              stop("Local package not found")
-            }
-            repo_local <- tmp[1, "Repository"]
-#             if (!exists(repo_local, .buffer, inherits = FALSE)) {
-              repo_local <- PackageRepository$new(
-              private$deriveRoot(repo_local, type = ii))  
-#               assign()
-#             }
-            repo_local$export(pkg = ii_2, type = ii, to = self$root, overwrite = TRUE)
-          })
+        private$pullInternalPackages(deps = deps, type = ii)
+        if (atomize) {
+          private$atomarizeRepositoryContent(type = ii, symlink = symlink)                       
         }
       })
       self$refresh()
@@ -567,7 +609,7 @@ PackageRepository <- R6Class(
       TRUE
     },
     remove = function(
-      pkg = private$getPackageName(),
+      pkg = private$getFromDescription("Package"),
       type = private$subdirs,
       ask = TRUE,
       clean = FALSE
@@ -691,9 +733,9 @@ PackageRepository <- R6Class(
     }
   ),
 
-  ##----------------------------------------------------------------------------
+  ##############################################################################
   ## Private //
-  ##----------------------------------------------------------------------------
+  ##############################################################################
 
   private = list(
     .root = character(),
@@ -739,6 +781,19 @@ PackageRepository <- R6Class(
       names(out) <- type
       out
     },
+    askForInternalRepository = function(
+      msg = "Please select root directory of internal repository ([c]choose | [t]ype | [q]uit): "
+    ) {
+      input <- readline(msg)
+      if (grepl("[cC]|choose|Choose|CHOOSE", input)) {
+        normalizePath(choose.dir(), winslash = "/")
+      } else if (grepl("[tT]|type|Type|TYPE", input)) {
+        normalizePath(
+          readline("Please type repository root path: "), winslash = "/")
+      } else if (grepl("[qQ]|quit|Quit|QUIT", input)) {
+        NULL 
+      }
+    },
     askForUserInput = function(
       msg = "Continue? [y]es | [n]o | [q]uit: ", 
       force = logical()
@@ -752,6 +807,85 @@ PackageRepository <- R6Class(
     },
     .asNonUrl = function(value) {
       gsub("///?", "", gsub("^.*/?(?=//)", "", value, perl = TRUE))
+    },
+    atomarizeRepositoryContent = function(
+      pkgs = list(),
+      type = private$subdirs,
+      symlink = FALSE,
+      overwrite = FALSE,
+      refresh = FALSE
+    ) {
+      if (!length(pkgs)) {
+        pkgs <- private$getLatestPackages(type = type, refresh = refresh)  
+      }
+      out <- lapply(pkgs, function(ii) {
+        if (nrow(ii)) {
+          sapply(1:nrow(ii), function(row) {
+            pkg <- ii[row,]
+            root_target <- file.path(
+              self$root_archive, 
+              pkg$name,
+              pkg$version
+            )
+            tmp <- PackageRepository$new(root = root_target)
+            path_tgt <- file.path(tmp[[pkg$type]], basename(pkg$fpath))
+            if (!symlink) {
+              tmp$ensure()
+              file.copy(
+                pkg$fpath, 
+                path_tgt,
+                overwrite = overwrite
+              )
+              tmp$refresh()
+            } else {
+              tmp$ensure(index = FALSE)
+              ## Index files //
+              environment(tmp$ensure)$private$ensureIndexFileSymlinks(
+                root_src = self$root,
+                overwrite = overwrite
+              )
+              ## Package builds //
+              if (getOption("pkgType") == "win.binary") {
+                if (file.exists(path_tgt) && overwrite) {
+                  unlink(path_tgt, force = TRUE)
+                }
+                capture.output(shell(sprintf("mklink /H %s %s", 
+                  normalizePath(path_tgt, mustWork = FALSE),
+                  normalizePath(pkg$fpath, mustWork = FALSE)
+                ), intern = TRUE))
+              } else {
+                stop("Symbolic links not supported for this OS yet")
+              }
+            }
+            structure(TRUE, names = sprintf("%s_%s", pkg$name, pkg$version))
+          })
+        } else {
+          FALSE
+        }
+      })
+      names(out) <- type
+      out
+    },
+    createFakeRepoIndex = function() {
+      deps <- private$getDependenciesFromDescription()
+      cnt <- list(
+        Package = private$getFromDescription("Package"),
+        Version = private$getFromDescription("Version"),
+        Depends = if (!is.null(deps$Depends)) {
+          paste(deps$Depends, collapse = ", ")
+        },
+        Imports = if (!is.null(deps$Imports)) {
+          paste(deps$Imports, collapse = ", ")
+        },
+        Suggests = if (!is.null(deps$Suggests)) {
+          paste(deps$Suggests, collapse = ", ")
+        },
+        License = private$getFromDescription("License"),
+        MD5sum = "6b04ea09ab7d4e628f18075c9b6e93f8", ## fake
+        NeedsCompilation = private$getFromDescription("NeedsCompilation")
+      )
+      cnt[sapply(cnt, is.null)] <- NULL
+      cnt
     },
     detectScheme = function(
       input
@@ -777,6 +911,37 @@ PackageRepository <- R6Class(
       } else if (type == "win.binary") {
         gsub(paste0("file:///|/", private$.win.binary, ".*$"), "", input)
       } 
+    },
+    ensureAdditionalRepositories = function(deps) {
+      pkgs <- available.packages()
+      idx <- which(!deps %in% pkgs[, "Package"])
+      while(length(idx)) {
+        if (interactive()) {
+          conditionr::signalCondition(
+            condition = "PackagesNotInRepository",
+            msg = c(
+              "Packages not found in registered repositories",
+              Packages = paste(deps[idx], collapse = ", "),
+              "Prompting for specification of alternative/internal repository..."
+            ),
+            type = "message"
+          )
+        } else {
+          conditionr::signalCondition(
+            condition = "PackagesNotInRepository",
+            msg = c(
+              "Packages not found in repository",
+              Packages = paste(deps[idx], collapse = ", ")
+            ),
+            type = "error"
+          )
+        }
+        repo_internal <- PackageRepository$new(
+          private$askForInternalRepository())
+        repo_internal$register()
+        pkgs <- available.packages()
+        idx <- which(!deps %in% pkgs[, "Package"])
+      }
     },
     ensureIndexFiles = function(
       archive = FALSE, 
@@ -832,6 +997,82 @@ PackageRepository <- R6Class(
           ),
           type = "error"
         )
+      }
+    },
+    ensureIndexFileSymlinks = function(
+      root_src,
+      overwrite = FALSE
+    ) {  
+      this <- self 
+      root <- this$root
+      ## Depends on existinting repository root directory //
+      self$exists(strict = TRUE)
+      subdirs <- sapply(private$subdirs, function(ii) {
+        this[[ii]]
+      }, USE.NAMES = FALSE)
+      scheme <- private$detectScheme(root)
+      if (scheme %in% c("none", "file")) {
+        subdirs <- private$.asNonUrl(subdirs)
+        out <- sapply(seq(along = subdirs), function(ii) {     
+          path <- subdirs[[ii]]
+          targets <- file.path(path, c("PACKAGES", "PACKAGES.gz"))
+          srcs <- gsub(root, root_src, targets)
+          sapply(1:length(targets), function(ii_2) {
+            path_tgt <- targets[ii_2]
+            path_src <- srcs[ii_2]
+            if (getOption("pkgType") == "win.binary") {
+              if (file.exists(path_tgt) && overwrite) {
+                unlink(path_tgt, force = TRUE)
+              }
+              capture.output(shell(sprintf("mklink /H %s %s", 
+                normalizePath(path_tgt, mustWork = FALSE),
+                normalizePath(path_src, mustWork = FALSE)
+              ), intern = TRUE))
+            } else {
+              stop("Symbolic links not supported for this OS yet")
+            }
+          })
+          TRUE
+        })
+      } else {
+        conditionr::signalCondition(
+          condition = "EnsuranceOfRemoteNotSupportedYet",
+          msg = c(
+            "Ensurance of index files in remote repositories not supported yet",
+            Root = root,
+            Suggestions = "ensure manually or via FTP client"
+          ),
+          type = "error"
+        )
+      }
+      out
+    },
+    ensurePackageInIndex = function(
+      type = c("source", getOption("pkgType"))
+    ) {
+      index <- private$createFakeRepoIndex()
+      sapply(type, function(ii) {
+        if (!repo$has(type = ii)) {
+          path <- private$getSubDirs(ii)
+          write.dcf(index, file = file.path(path, "PACKAGES"))
+        }
+      })
+    },
+    getDependenciesFromDescription = function(path = "DESCRIPTION") {
+      desc <- as.list(read.dcf(path)[1,])
+      deps <- desc[c("Depends", "Imports", "Suggests")]
+      names(deps) <- c("Depends", "Imports", "Suggests")
+      lapply(deps, function(ii) {
+        unlist(strsplit(gsub("\\n| \\(.*\\)", "", ii), ","))
+      })
+    },
+    getFromDescription = function(field = character(), path = "DESCRIPTION") {
+      out <- suppressWarnings(try(
+        as.list(read.dcf(path)[1,])[[field]], silent = TRUE))
+      if (inherits(out, "try-error")) {
+        character()
+      } else {
+        out
       }
     },
     getLatestPackages = function(
@@ -954,15 +1195,6 @@ PackageRepository <- R6Class(
       })
       structure(out, names = type)
     },
-    getPackageName = function() {
-      name <- suppressWarnings(try(
-        as.list(read.dcf("DESCRIPTION")[1,])$Package, silent = TRUE))
-      if (inherits(name, "try-error")) {
-        character()
-      } else {
-        name
-      }
-    },
     getSubDirs = function(
       value = private$subdirs
     ) {
@@ -970,6 +1202,32 @@ PackageRepository <- R6Class(
       sapply(value, function(ii) {
         self[[ii]]
       }, USE.NAMES = FALSE)
+    },
+    getVersionMatrixFromDescription = function(path = "DESCRIPTION") {
+      desc <- as.list(read.dcf(path)[1,])
+      deps <- unique(c(desc$Depends, desc$Imports, desc$Suggests))
+      deps <- unlist(strsplit(gsub("\\n", "", deps), ","))  
+      deps <- strsplit(deps, "\\(")
+      do.call("rbind", lapply(deps, function(ii) {
+        if (length(ii) > 1) {
+          tmp <- unlist(strsplit(ii[2], " "))
+          data.frame(name = gsub("\\s", "", ii[1]), operator = tmp[1], 
+            version = gsub("\\)", "", tmp[2]), stringsAsFactors = FALSE)
+        } else {
+          data.frame(name = gsub("\\s", "", ii[1]), operator = NA, 
+            version = NA, stringsAsFactors = FALSE)
+        }
+      }))
+    },
+    getVersionMatrixFromRepo = function(repo = self) {
+      if (!length(repo)) {
+        repo <- getOption("repos")["CRAN"][1]
+      }
+#       repo <- reposr::PackageRepository$new(repo) 
+      # file.exists(repo$asNonUrl())
+      vsn_mat <- repo$show()[ , c("Package", "Version")]
+      colnames(vsn_mat) <- c("name", "version")
+      vsn_mat
     },
     parseIndexFile = function(
       type = getOption("pkgType")
@@ -986,7 +1244,7 @@ PackageRepository <- R6Class(
         file.path(self$source, fname)  
       }
       scheme <- private$detectScheme(self$root)
-      if (scheme == "file") {
+      if (scheme %in% c("none", "file")) {
         fpath <- private$.asNonUrl(fpath)
       } else {
         fpath <- url(fpath)
@@ -1007,8 +1265,33 @@ PackageRepository <- R6Class(
         NULL
       }
     },
+    pullInternalPackages = function(
+      deps,
+      type = getOption("pkgType")
+    ) {
+      pkg_local <- setdiff(deps, self$show(type = type)$Package)
+      if (length(pkg_local)) {
+        ## Local CRANs //
+        repos_local <- grep("file://", getOption("repos"), value = TRUE)
+        pkgs_local <- pkgAvail(repos = repos_local, type = type)  
+        sapply(pkg_local, function(ii_2) {
+          tmp <- pkgs_local[which(pkgs_local[, "Package"] %in% ii_2), , drop = FALSE]  
+          if (!nrow(tmp)) {
+            stop("Local package not found")
+          }
+          repo_local <- tmp[1, "Repository"]
+          #             if (!exists(repo_local, .buffer, inherits = FALSE)) {
+          repo_local <- PackageRepository$new(
+            private$deriveRoot(repo_local, type = type))  
+          #               assign()
+          #             }
+          repo_local$export(pkg = ii_2, type = type, to = self$root, 
+            overwrite = TRUE)
+        })
+      }
+    },
     respondsUrl = function(x) {
-      inherits(try(readLines(x)), "try-error")
+      !inherits(try(readLines(x)), "try-error")
     },
     validateExistence = function(
       strict = 0:3
@@ -1050,9 +1333,9 @@ PackageRepository <- R6Class(
     }
   ),
 
-  ##----------------------------------------------------------------------------
+  ##############################################################################
   ## Active //
-  ##----------------------------------------------------------------------------
+  ##############################################################################
 
   active = list(
     root = function(value) {

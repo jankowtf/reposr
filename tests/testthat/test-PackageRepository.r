@@ -16,7 +16,7 @@ withConditionalWorkingDirectory <- function(code) {
   force(code)
 }
 #   withConditionalWorkingDirectory({
-#     root <- "data/lcran"
+#     root <- "data/cran"
 #     repo <- PackageRepository$new(root = root)
 #     repo$ensure()
 #     repo$buildInto()
@@ -30,8 +30,16 @@ test_that("PackageRepository/constructor/bare", {
 
   expect_is(res <- PackageRepository$new(), "PackageRepository")
   expect_true(!is.null(res$root))
+  expect_identical(res$root, file.path(getwd(), "cran"))
   expect_true(!is.null(res$scheme))
   expect_identical(res$scheme, "none")
+  
+})
+
+test_that("PackageRepository/constructor/packrat", {
+  
+  repo <- PackageRepository$new(packrat = TRUE)
+  expect_identical(repo$root, file.path(getwd(), "packrat/cran"))
   
 })
 
@@ -168,13 +176,13 @@ withConditionalWorkingDirectory(
     expect_is(res <- PackageRepository$new(), "PackageRepository")
     
     expect_identical(res$mac.binary,
-      structure(file.path(getwd(), "lcran/bin/macosx/contrib", rversion), 
+      structure(file.path(getwd(), "cran/bin/macosx/contrib", rversion), 
                 names = "mac.binary"))
     expect_identical(res$win.binary,
-      structure(file.path(getwd(), "lcran/bin/windows/contrib", rversion), 
+      structure(file.path(getwd(), "cran/bin/windows/contrib", rversion), 
                 names = "win.binary"))
     expect_identical(res$source,
-      structure(file.path(getwd(), "lcran/src/contrib"), names = "source"))
+      structure(file.path(getwd(), "cran/src/contrib"), names = "source"))
   })
 )
 
@@ -228,7 +236,7 @@ context("PackageRepository/browse")
 if (basename(getwd()) != "testthat") {
   test_that("PackageRepository/browse", {
     
-    root <- file.path(tempdir(), "lcran")
+    root <- file.path(tempdir(), "cran")
     repo <- PackageRepository$new(root)
     repo$ensure(overwrite = TRUE, ask = FALSE)
     
@@ -244,7 +252,7 @@ if (basename(getwd()) != "testthat") {
   
   test_that("PackageRepository/browse/strict", {
     
-    root <- file.path(tempdir(), "lcran")
+    root <- file.path(tempdir(), "cran")
     repo <- PackageRepository$new(root)
     repo$delete(ask = FALSE)
     expect_false(repo$browse())
@@ -256,7 +264,7 @@ if (basename(getwd()) != "testthat") {
   
   test_that("PackageRepository/browse/archive", {
     
-    root <- file.path(tempdir(), "lcran")
+    root <- file.path(tempdir(), "cran")
     repo <- PackageRepository$new(root)
     repo$ensure(archive = TRUE, overwrite = TRUE, ask = FALSE)
     
@@ -277,7 +285,7 @@ context("PackageRepository/build into")
 
 test_that("PackageRepository/build into", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   expect_error(repo$buildInto())
   expect_true(repo$buildInto(ensure = TRUE))
@@ -292,9 +300,9 @@ context("PackageRepository/clean")
 test_that("PackageRepository/clean", {
     
   withConditionalWorkingDirectory(
-    file.copy("data/lcran", tempdir(), recursive = TRUE, overwrite = TRUE)
+    file.copy("data/cran", tempdir(), recursive = TRUE, overwrite = TRUE)
   )
-  repo <- file.path(tempdir(), "lcran")
+  repo <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = repo)
   expect_true(repo$clean())
   expect_true(file.exists(repo$root_archive))
@@ -311,7 +319,7 @@ context("PackageRepository/delete")
 
 test_that("PackageRepository/delete", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$ensure()
   expect_true(repo$delete(ask = FALSE))
@@ -324,9 +332,9 @@ test_that("PackageRepository/delete", {
 
 test_that("PackageRepository/delete/archive", {
   
-  repo_archive <- file.path(tempdir(), "lcran_archive")
+  repo_archive <- file.path(tempdir(), "cran_archive")
   dir.create(repo_archive)
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$ensure()
   expect_true(repo$delete(archive = TRUE, ask = FALSE))
@@ -341,10 +349,10 @@ context("PackageRepository/depends on")
 test_that("PackageRepository/depends on", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/lcran_3")
+    root <- file.path(getwd(), "data/cran_3")
   )
 #   file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-#   root <- file.path(tempdir(), "lcran_3")
+#   root <- file.path(tempdir(), "cran_3")
   repo <- PackageRepository$new(root = root)
   
   options("repos" = c(CRAN = "http://cran.rstudio.com", 
@@ -362,7 +370,7 @@ context("PackageRepository/ensure")
 
 test_that("PackageRepository/ensure", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   expect_true(repo$ensure())
   expect_true(file.exists(repo$root))
@@ -382,7 +390,7 @@ test_that("PackageRepository/ensure", {
 
 test_that("PackageRepository/ensure/overwrite", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   expect_true(repo$ensure())
   if (interactive()) {
@@ -394,7 +402,7 @@ test_that("PackageRepository/ensure/overwrite", {
 
 test_that("PackageRepository/ensure/archive", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   expect_true(repo$ensure(archive = TRUE))
   expect_true(file.exists(repo$root_archive))
@@ -408,7 +416,7 @@ context("PackageRepository/exists")
 
 test_that("PackageRepository/exists", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$delete(ask = FALSE)
   expect_false(repo$exists())
@@ -420,7 +428,7 @@ test_that("PackageRepository/exists", {
 
 test_that("PackageRepository/exists/archive", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$delete(ask = FALSE)
   expect_false(repo$exists(archive = TRUE))
@@ -432,7 +440,7 @@ test_that("PackageRepository/exists/archive", {
 
 test_that("PackageRepository/exists/file", {
   
-  root <- file.path("file://", tempdir(), "lcran")
+  root <- file.path("file://", tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$delete(ask = FALSE)
   expect_false(repo$exists())
@@ -446,8 +454,8 @@ test_that("PackageRepository/exists/http", {
   
   root <- "http://cran.rstudio.com"
   repo <- PackageRepository$new(root = root)
-  expect_false(repo$delete(ask = FALSE))
-  expect_false(repo$exists())
+  expect_error(repo$delete(ask = FALSE))
+  expect_true(repo$exists())
   expect_error(repo$ensure())
   if (FALSE) {
     expect_true(repo$exists())
@@ -458,10 +466,11 @@ test_that("PackageRepository/exists/http", {
 
 test_that("PackageRepository/exists/ftp", {
   
-  root <- "ftp://cran.rstudio.com"
+#   root <- "ftp://cran.rstudio.com"
+  root <- "ftp://cran.at.r-project.org/"
   repo <- PackageRepository$new(root = root)
-  expect_false(repo$delete(ask = FALSE))
-  expect_false(repo$exists())
+  expect_error(repo$delete(ask = FALSE))
+  expect_true(repo$exists())
   expect_error(repo$ensure())
   if (FALSE) {
     expect_true(repo$exists())
@@ -476,10 +485,10 @@ context("PackageRepository/export")
 
 test_that("PackageRepository/export/entire repo", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$ensure()
-  to <- file.path(tempdir(), "lcran_2")
+  to <- file.path(tempdir(), "cran_2")
   expect_true(repo$export(to = to))
   expect_true(file.exists(to))
   repo$delete(ask = FALSE)
@@ -490,11 +499,11 @@ test_that("PackageRepository/export/entire repo", {
 test_that("PackageRepository/export/package", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/lcran_3")
+    root <- file.path(getwd(), "data/cran_3")
   )
   file.copy(root, tempdir(), recursive = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran_3"))
-  to <- file.path(tempdir(), "lcran_new")
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_3"))
+  to <- file.path(tempdir(), "cran_new")
   expect_true(all(res <- repo$export(pkg = "reposr", to = to)))
   expect_true(all(sapply(names(res), file.exists)))
   repo$delete(ask = FALSE)
@@ -505,11 +514,11 @@ test_that("PackageRepository/export/package", {
 test_that("PackageRepository/export/packages", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/lcran_4")
+    root <- file.path(getwd(), "data/cran_4")
   )
   file.copy(root, tempdir(), recursive = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran_4"))
-  to <- file.path(tempdir(), "lcran_new")
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+  to <- file.path(tempdir(), "cran_new")
   
   expect_true(all(res <- repo$export(pkg = c("reposr", "R6"), to = to)))
   expect_true(all(sapply(names(res), file.exists)))
@@ -525,7 +534,7 @@ context("PackageRepository/has any")
 test_that("PackageRepository/has any", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/lcran")
+    root <- file.path(getwd(), "data/cran")
   )
   repo <- PackageRepository$new(root = root)
   
@@ -542,9 +551,9 @@ context("PackageRepository/has package")
 test_that("PackageRepository/has packages/single", {
   
   withConditionalWorkingDirectory({
-    file.copy("data/lcran", tempdir(), recursive = TRUE)
+    file.copy("data/cran", tempdir(), recursive = TRUE)
   })
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root) 
   expect_true(repo$has(pkg = "dummy"))
   expect_identical(repo$has(pkg = "dummy", atomic = FALSE),
@@ -564,9 +573,9 @@ test_that("PackageRepository/has packages/single", {
 test_that("PackageRepository/has package/multiple", {
   
   withConditionalWorkingDirectory({
-    file.copy("data/lcran", tempdir(), recursive = TRUE)
+    file.copy("data/cran", tempdir(), recursive = TRUE)
   })
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root) 
   pkg <- rep("dummy", 2)
   expect_identical(repo$has(pkg = pkg),
@@ -592,25 +601,66 @@ context("PackageRepository/pull")
 test_that("PackageRepository/pull", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/lcran_4")
+    root <- file.path(getwd(), "data/cran_4")
   )
   file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran_4"))
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
   
   repo_rappster <- PackageRepository$new(
     root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
-  repo_rappster$show()  
   repo_rappster$register()
-#   repo <- PackageRepository$new(root = root)
-#   repo$buildInto(ensure = TRUE)
-#   repo$register()
-#   repo$dependsOn()
-#   self=repo
   expect_true(repo$pull())
   expect_true(length(list.files(repo$source)) >= 25)
   repo_rappster$unregister()
   repo$unregister()
   repo$delete(ask = FALSE)
+  
+})
+
+test_that("PackageRepository/pull/atomize", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/cran_4")
+  )
+  file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+  
+  repo_rappster <- PackageRepository$new(
+    root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+  repo_rappster$register()
+  expect_true(repo$pull(atomize = TRUE))
+  expect_true(length(list.files(repo$root_archive)) >= 23)
+  expect_true(
+    length(list.files(list.files(repo$root_archive, full.names = TRUE))) >= 23
+  )
+  repo_rappster$unregister(reset = TRUE)
+  repo$unregister(reset = TRUE)
+  repo$delete(ask = FALSE)
+  repo$delete(archive = TRUE, ask = FALSE)
+  
+})
+
+test_that("PackageRepository/pull/atomize/symlinks", {
+  
+  withConditionalWorkingDirectory(    
+    root <- file.path(getwd(), "data/cran_4")
+  )
+  file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+  
+  repo_rappster <- PackageRepository$new(
+    root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+  repo_rappster$register()
+  
+  expect_true(repo$pull(atomize = TRUE, symlink = TRUE))
+  expect_true(length(list.files(repo$root_archive)) >= 23)
+  expect_true(
+    length(list.files(list.files(repo$root_archive, full.names = TRUE))) >= 23
+  )
+  repo_rappster$unregister(reset = TRUE)
+  repo$unregister(reset = TRUE)
+  repo$delete(ask = FALSE)
+  repo$delete(archive = TRUE, ask = FALSE)
   
 })
 
@@ -620,7 +670,7 @@ context("PackageRepository/refresh")
 
 test_that("PackageRepository/refresh", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   expect_is(repo <- PackageRepository$new(root = root), "PackageRepository")
   expect_true(repo$ensure())
   expect_true(repo$refresh())
@@ -641,7 +691,7 @@ test_that("PackageRepository/register", {
     structure(repo$asUrl(), names = "CRAN"))
   expect_true(length(environment(repo$ensure)$private$.roption_repo_cache) > 0)
   
-  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran"))
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran"))
   expect_true(repo$register(before_cran = FALSE))
   opts_2 <- getOption("repos")
   expect_identical(opts_2[length(opts_2)], structure(repo$asUrl(), 
@@ -658,9 +708,9 @@ context("PackageRepository/remove packages")
 test_that("PackageRepository/remove/all types", {
   
   withConditionalWorkingDirectory({
-    file.copy("data/lcran_2", tempdir(), recursive = TRUE)
+    file.copy("data/cran_2", tempdir(), recursive = TRUE)
   })
-  root <- file.path(tempdir(), "lcran_2")
+  root <- file.path(tempdir(), "cran_2")
   repo <- PackageRepository$new(root = root) 
   expect_true(repo$remove(pkg = "dummy", ask = FALSE))
 # self=repo  
@@ -676,9 +726,9 @@ test_that("PackageRepository/remove/all types", {
 test_that("PackageRepository/remove/specific types", {
   
   withConditionalWorkingDirectory({
-    file.copy("data/lcran_2", tempdir(), recursive = TRUE)
+    file.copy("data/cran_2", tempdir(), recursive = TRUE)
   })
-  root <- file.path(tempdir(), "lcran_2")
+  root <- file.path(tempdir(), "cran_2")
   repo <- PackageRepository$new(root = root) 
   expect_true(repo$remove(pkg = "dummy", 
     type = "source", ask = FALSE))
@@ -698,9 +748,9 @@ context("PackageRepository/reset")
 
 test_that("PackageRepository/reset", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   withConditionalWorkingDirectory(
-    file.copy("data/lcran", tempdir(), recursive = TRUE)
+    file.copy("data/cran", tempdir(), recursive = TRUE)
   )
   repo <- PackageRepository$new(root = root)
   expect_true(repo$reset(ask = FALSE))
@@ -716,7 +766,7 @@ context("PackageRepository/show")
 test_that("PackageRepository/show", {
   
   withConditionalWorkingDirectory(
-    root <- file.path(getwd(), "data/lcran_2")
+    root <- file.path(getwd(), "data/cran_2")
   )
   repo <- PackageRepository$new(root = root)
   expect_true(length(index <- repo$show()) > 0)
@@ -727,7 +777,7 @@ test_that("PackageRepository/show", {
 test_that("PackageRepository/show/file", {
   
   withConditionalWorkingDirectory(
-    root <- file.path("file://", getwd(), "data/lcran_2")
+    root <- file.path("file://", getwd(), "data/cran_2")
   )
   repo <- PackageRepository$new(root = root)
   expect_true(length(index <- repo$show()) > 0)
@@ -751,7 +801,7 @@ context("PackageRepository/unregister")
 test_that("PackageRepository/unregister", {
   
   withConditionalWorkingDirectory(
-    root <- file.path(getwd(), "data/lcran_2")
+    root <- file.path(getwd(), "data/cran_2")
   )
   repo <- PackageRepository$new(root)
   repo$register()
@@ -764,12 +814,12 @@ test_that("PackageRepository/unregister", {
 test_that("PackageRepository/unregister/reset", {
   
   withConditionalWorkingDirectory(
-    root <- file.path(getwd(), "data/lcran_2")
+    root <- file.path(getwd(), "data/cran_2")
   )
   repo_1 <- PackageRepository$new(root)
   repo_1$register()  
   withConditionalWorkingDirectory(
-    root <- file.path(getwd(), "data/lcran_3")
+    root <- file.path(getwd(), "data/cran_3")
   )
   repo_2 <- PackageRepository$new(root)
   repo_2$register()  
@@ -789,7 +839,7 @@ context("PackageRepository/visualizeDependencies")
 test_that("PackageRepository/visualizeDependencies", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/lcran_3")
+    root <- file.path(getwd(), "data/cran_3")
   )
   repo <- PackageRepository$new(root)
   repo$register()
@@ -820,12 +870,32 @@ test_that("PackageRepository/visualizeDependencies", {
 ################################################################################
 
 ##------------------------------------------------------------------------------
+context("PackageRepository/private/archivePackages")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/private/archivePackages", {
+  
+  withConditionalWorkingDirectory(
+    tmp <- file.path(getwd(), "data/cran")
+  )
+  file.copy(tmp, tempdir(), recursive = TRUE)
+  root <- file.path(tempdir(), "cran")
+  repo <- PackageRepository$new(root = root)
+  # self = repo  
+  private <- environment(repo$ensure)$private
+  expect_is(res <- private$archivePackages(refresh = FALSE), "list")
+  expect_identical(res[[getOption("pkgType")]], c(dummy_1.0 = TRUE, dummy_1.1 = TRUE))
+  repo$delete(ask = FALSE)
+  
+})
+
+##------------------------------------------------------------------------------
 context("PackageRepository/private/derive root")
 ##------------------------------------------------------------------------------
 
 test_that("PackageRepository/private/derive root", {
   
-  repo <- PackageRepository$new(root = file.path(tempdir(), "lcran"))
+  repo <- PackageRepository$new(root = file.path(tempdir(), "cran"))
   private <- environment(repo$ensure)$private
   expect_identical(
     private$deriveRoot(
@@ -882,7 +952,7 @@ context("PackageRepository/private/ensureIndexFiles")
 
 test_that("PackageRepository/private/ensureIndexFiles", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   private <- environment(repo$ensure)$private
   expect_error(private$ensureIndexFiles())
@@ -894,7 +964,7 @@ test_that("PackageRepository/private/ensureIndexFiles", {
 
 test_that("PackageRepository/private/ensureIndexFiles/archive", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$delete(archive = TRUE, ask = FALSE)
   private <- environment(repo$ensure)$private
@@ -911,9 +981,9 @@ context("PackageRepository/private/getLatestPackages")
 
 test_that("PackageRepository/private/getLatestPackages", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   withConditionalWorkingDirectory(
-    file.copy("data/lcran", tempdir(), recursive = TRUE)
+    file.copy("data/cran", tempdir(), recursive = TRUE)
   )
   repo <- PackageRepository$new(root = root)
   priv <- environment(repo$ensure)$private
@@ -940,9 +1010,9 @@ context("PackageRepository/private/getOldPackages")
 
 test_that("PackageRepository/private/getOldPackages", {
   
-  root <- file.path(tempdir(), "lcran")
+  root <- file.path(tempdir(), "cran")
   withConditionalWorkingDirectory(
-    file.copy("data/lcran", tempdir(), recursive = TRUE)
+    file.copy("data/cran", tempdir(), recursive = TRUE)
   )
   repo <- PackageRepository$new(root = root)
   priv <- environment(repo$ensure)$private
@@ -961,20 +1031,41 @@ test_that("PackageRepository/private/getOldPackages", {
 })
 
 ##------------------------------------------------------------------------------
-context("PackageRepository/private/archivePackages")
+context("PackageRepository/private/getVersionMatrixFromDescription")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/private/archivePackages", {
+test_that("PackageRepository/private/getVersionMatrixFromDescription", {
   
-  root <- file.path(tempdir(), "lcran")
   withConditionalWorkingDirectory(
-    file.copy("data/lcran", tempdir(), recursive = TRUE)
+    tmp <- file.path(getwd(), "data/cran")
   )
+  file.copy(tmp, tempdir(), recursive = TRUE)
+  root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
-# self = repo  
   private <- environment(repo$ensure)$private
-  expect_is(res <- private$archivePackages(refresh = FALSE), "list")
-  expect_identical(res[[getOption("pkgType")]], c(dummy_1.0 = TRUE, dummy_1.1 = TRUE))
+  expect_is(res <- private$getVersionMatrixFromDescription(), "data.frame")
+  expect_true(all(colnames(res) == c("name", "operator", "version")))
+  expect_true(nrow(res) > 0)
+  repo$delete(ask = FALSE)
+  
+})
+
+##------------------------------------------------------------------------------
+context("PackageRepository/private/getVersionMatrixFromRepo")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/private/getVersionMatrixFromRepo", {
+  
+  withConditionalWorkingDirectory(
+    tmp <- file.path(getwd(), "data/cran")
+  )
+  file.copy(tmp, tempdir(), recursive = TRUE)
+  root <- file.path(tempdir(), "cran")
+  repo <- PackageRepository$new(root)
+  private <- environment(repo$ensure)$private
+  expect_is(res <- private$getVersionMatrixFromRepo(), "data.frame")
+  expect_true(all(colnames(res) == c("name", "version")))
+  expect_true(nrow(res) > 0)
   repo$delete(ask = FALSE)
   
 })
@@ -986,7 +1077,7 @@ context("PackageRepository/private/parse index file")
 test_that("PackageRepository/private/parse index file", {
   
   withConditionalWorkingDirectory(
-    root <- file.path(getwd(), "data/lcran")
+    root <- file.path(getwd(), "data/cran")
   )
   expect_is(repo <- PackageRepository$new(root = root), "PackageRepository")
   private <- environment(repo$ensure)$private
