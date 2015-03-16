@@ -4,7 +4,7 @@
 \name{PackageRepository}
 \alias{PackageRepository}
 \title{Class: PackageRepository}
-\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x00000000090ace38> 
+\format{\preformatted{Class 'R6ClassGenerator' <environment: 0x000000000a4163b0> 
  - attr(*, "name")= chr "PackageRepository_generator"
 }}
 \usage{
@@ -56,7 +56,7 @@ print(repo, full = TRUE)
 
 ## Most important fields //
 repo$root
-repo$root_archive
+repo$root_atomic
 repo[[getOption("pkgType")]]
 repo$win.binary
 repo$mac.binary
@@ -144,9 +144,9 @@ file.exists(repo$root)
 repo$ensure()
 file.exists(repo$root)
 
-file.exists(repo$root_archive)
+file.exists(repo$root_atomic)
 repo$ensure(archive = TRUE)
-file.exists(repo$root_archive)
+file.exists(repo$root_atomic)
 
 ## Exists //
 repo$exists()

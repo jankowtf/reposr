@@ -15,12 +15,8 @@ withConditionalWorkingDirectory <- function(code) {
   on.exit(setwd(wd))
   force(code)
 }
-#   withConditionalWorkingDirectory({
-#     root <- "data/cran"
-#     repo <- PackageRepository$new(root = root)
-#     repo$ensure()
-#     repo$buildInto()
-#   })    
+batch_test <- basename(getwd()) == "testthat"
+# require(testthat)
 
 ##------------------------------------------------------------------------------
 context("PackageRepository/constructor")
@@ -204,16 +200,16 @@ test_that("PackageRepository/as URL", {
   
 })
 
-test_that("PackageRepository/as URL/archive", {
+test_that("PackageRepository/as URL/atomic", {
   
   repo <- PackageRepository$new()
-  root <- "root_archive"
-  expect_identical(repo$asUrl(archive = TRUE), file.path("file://", repo[[root]]))
-  expect_identical(repo$asUrl("file", archive = TRUE), 
+  root <- "root_atomic"
+  expect_identical(repo$asUrl(atomic = TRUE), file.path("file://", repo[[root]]))
+  expect_identical(repo$asUrl("file", atomic = TRUE), 
     file.path("file://", repo[[root]]))
-  expect_identical(repo$asUrl("http", archive = TRUE), 
+  expect_identical(repo$asUrl("http", atomic = TRUE), 
     file.path("http://", repo[[root]]))
-  expect_identical(repo$asUrl("ftp", archive = TRUE),
+  expect_identical(repo$asUrl("ftp", atomic = TRUE),
     file.path("ftp://", repo[[root]]))
   
 })
@@ -283,15 +279,17 @@ if (basename(getwd()) != "testthat") {
 context("PackageRepository/build into")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/build into", {
-  
-  root <- file.path(tempdir(), "cran")
-  repo <- PackageRepository$new(root = root)
-  expect_error(repo$buildInto())
-  expect_true(repo$buildInto(ensure = TRUE))
-  repo$delete(ask = FALSE)
-  
-})
+if (!batch_test) {
+  test_that("PackageRepository/build into", {
+    
+    root <- file.path(tempdir(), "cran")
+    repo <- PackageRepository$new(root = root)
+    expect_error(repo$buildInto())
+    expect_true(repo$buildInto(ensure = TRUE))
+    repo$delete(ask = FALSE)
+    
+  })
+}
 
 ##------------------------------------------------------------------------------
 context("PackageRepository/clean")
@@ -305,11 +303,11 @@ test_that("PackageRepository/clean", {
   repo <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = repo)
   expect_true(repo$clean())
-  expect_true(file.exists(repo$root_archive))
-  expect_true(length(list.files(repo$root_archive, 
+  expect_true(file.exists(repo$root_atomic))
+  expect_true(length(list.files(repo$root_atomic, 
     recursive = TRUE, pattern = "dummy")) == 4)
   repo$delete(ask = FALSE)
-  repo$delete(archive = TRUE, ask = FALSE)
+  repo$delete(atomic = TRUE, ask = FALSE)
   
 })
 
@@ -330,15 +328,15 @@ test_that("PackageRepository/delete", {
   
 })
 
-test_that("PackageRepository/delete/archive", {
+test_that("PackageRepository/delete/atomic", {
   
-  repo_archive <- file.path(tempdir(), "cran_archive")
-  dir.create(repo_archive)
+  repo_atomic <- file.path(tempdir(), "cran_atomic")
+  dir.create(repo_atomic)
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$ensure()
-  expect_true(repo$delete(archive = TRUE, ask = FALSE))
-  expect_false(file.exists(repo_archive))
+  expect_true(repo$delete(atomic = TRUE, ask = FALSE))
+  expect_false(file.exists(repo_atomic))
   
 })
 
@@ -351,16 +349,18 @@ test_that("PackageRepository/depends on", {
   withConditionalWorkingDirectory(    
     root <- file.path(getwd(), "data/cran_3")
   )
-#   file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-#   root <- file.path(tempdir(), "cran_3")
   repo <- PackageRepository$new(root = root)
+  repo$register()
   
-  options("repos" = c(CRAN = "http://cran.rstudio.com", 
-    LCRAN = repo$asUrl()))
-  ## --> necessary for global test run
-  
+  if (batch_test) {
+#     options("repos" = c(CRAN = "http://cran.rstudio.com"))
+    options("repos" = c(CRAN = repo$asUrl(),
+      CRAN = "http://cran.rstudio.com"))
+    ## --> necessary for global test run
+  }
   expect_true(length(repo$dependsOn()) > 0)
   expect_true(length(repo$dependsOn(local_only = TRUE)) < 6)
+  repo$unregister(reset = TRUE)
   
 })
 
@@ -397,16 +397,19 @@ test_that("PackageRepository/ensure/overwrite", {
     repo$ensure(overwrite = TRUE)
   }
   expect_true(repo$ensure(overwrite = TRUE, ask = FALSE))
+  repo$delete(ask = FALSE)
   
 })
 
-test_that("PackageRepository/ensure/archive", {
+test_that("PackageRepository/ensure/atomic", {
   
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
-  expect_true(repo$ensure(archive = TRUE))
-  expect_true(file.exists(repo$root_archive))
-  repo$delete(archive = TRUE, ask = FALSE)
+  expect_true(repo$ensure(atomic = TRUE))
+  expect_true(file.exists(repo$root_atomic))
+  expect_true(file.exists(repo$root_atomic_pkg))
+  expect_true(file.exists(repo$root_atomic_pkg_vsn))
+  repo$delete(atomic = TRUE, ask = FALSE)
 
 })
 
@@ -426,15 +429,15 @@ test_that("PackageRepository/exists", {
   
 })
 
-test_that("PackageRepository/exists/archive", {
+test_that("PackageRepository/exists/atomic", {
   
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   repo$delete(ask = FALSE)
-  expect_false(repo$exists(archive = TRUE))
-  repo$ensure(archive = TRUE)
-  expect_true(repo$exists(archive = TRUE))
-  repo$delete(archive = TRUE, ask = FALSE)
+  expect_false(repo$exists(atomic = TRUE))
+  repo$ensure(atomic = TRUE)
+  expect_true(repo$exists(atomic = TRUE))
+  repo$delete(atomic = TRUE, ask = FALSE)
   
 })
 
@@ -469,8 +472,18 @@ test_that("PackageRepository/exists/ftp", {
 #   root <- "ftp://cran.rstudio.com"
   root <- "ftp://cran.at.r-project.org/"
   repo <- PackageRepository$new(root = root)
-  expect_error(repo$delete(ask = FALSE))
-  expect_true(repo$exists())
+  if (batch_test) {
+    repos <- getOption("repos")
+    repos["CRAN"] <- "http://cran.rstudio.com"
+    options(repos = repos)
+  }
+  if (batch_test) {
+    expect_false(repo$delete(ask = FALSE))
+    expect_false(repo$exists())
+  } else {
+    expect_error(repo$delete(ask = FALSE))
+    expect_true(repo$exists())
+  }
   expect_error(repo$ensure())
   if (FALSE) {
     expect_true(repo$exists())
@@ -480,49 +493,48 @@ test_that("PackageRepository/exists/ftp", {
 })
 
 ##------------------------------------------------------------------------------
-context("PackageRepository/export")
+context("PackageRepository/push")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/export/entire repo", {
+test_that("PackageRepository/push/entire repo", {
   
-  root <- file.path(tempdir(), "cran")
+  withConditionalWorkingDirectory(
+    root <- file.path(getwd(), "data/repo_complete")
+  )
   repo <- PackageRepository$new(root = root)
-  repo$ensure()
-  to <- file.path(tempdir(), "cran_2")
-  expect_true(repo$export(to = to))
+  to <- file.path(tempdir(), "repo_pushed")
+  expect_true(repo$push(to = to))
   expect_true(file.exists(to))
-  repo$delete(ask = FALSE)
+  expect_true(length(list.files(file.path(to, 
+    "src/contrib"), pattern = "XML")) != 0)
   unlink(to, recursive = TRUE)
   
 })
 
-test_that("PackageRepository/export/package", {
+test_that("PackageRepository/push/package", {
   
   withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/cran_3")
+    root <- file.path(getwd(), "data/repo_complete")
   )
-  file.copy(root, tempdir(), recursive = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_3"))
+  repo <- PackageRepository$new(root = root)
   to <- file.path(tempdir(), "cran_new")
-  expect_true(all(res <- repo$export(pkg = "reposr", to = to)))
+  expect_false(all(res <- repo$push(pkg = "reposr", to = to)))
+  expect_true(all(res <- repo$push(pkg = "R6", to = to)))
   expect_true(all(sapply(names(res), file.exists)))
-  repo$delete(ask = FALSE)
   unlink(to, recursive = TRUE)
   
 })
 
-test_that("PackageRepository/export/packages", {
+test_that("PackageRepository/push/packages", {
   
   withConditionalWorkingDirectory(    
     root <- file.path(getwd(), "data/cran_4")
   )
-  file.copy(root, tempdir(), recursive = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+  repo <- PackageRepository$new(root = root)
   to <- file.path(tempdir(), "cran_new")
   
-  expect_true(all(res <- repo$export(pkg = c("reposr", "R6"), to = to)))
+  expect_true(all(res <- repo$push(pkg = c("reposr", "R6"), to = to)))
   expect_true(all(sapply(names(res), file.exists)))
-  repo$delete(ask = FALSE)
   unlink(to, recursive = TRUE)
   
 })
@@ -598,72 +610,220 @@ test_that("PackageRepository/has package/multiple", {
 context("PackageRepository/pull")
 ##------------------------------------------------------------------------------
 
-test_that("PackageRepository/pull", {
+if (!batch_test) {
+  test_that("PackageRepository/pull", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/cran_4")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    
+    repo_rappster <- PackageRepository$new(
+      root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+    repo_rappster$register()
   
-  withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/cran_4")
-  )
-  file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    expect_true(repo$pull())
+    expect_true(length(list.files(repo$source)) >= 25)
+    repo_rappster$unregister()
+    repo$unregister()
+    repo$delete(ask = FALSE)
   
-  repo_rappster <- PackageRepository$new(
-    root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
-  repo_rappster$register()
+  })
+  
+  test_that("PackageRepository/pull/atomize", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/cran_4")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    
+    repo_rappster <- PackageRepository$new(
+      root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+    repo_rappster$register()
+    expect_true(repo$pull(atomize = TRUE))
+    expect_true(length(list.files(repo$root_atomic)) >= 23)
+    expect_true(
+      length(list.files(list.files(repo$root_atomic, full.names = TRUE))) >= 23
+    )
+    repo_rappster$unregister(reset = TRUE)
+    repo$unregister(reset = TRUE)
+    repo$delete(ask = FALSE)
+    repo$delete(atomic = TRUE, ask = FALSE)
+    
+  })
+  
+  test_that("PackageRepository/pull/atomize/symlinks", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/cran_4")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    
+    repo_rappster <- PackageRepository$new(
+      root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+    repo_rappster$register()
+    
+    expect_true(repo$pull(atomize = TRUE, symlink = TRUE))
+    expect_true(length(list.files(repo$root_atomic)) >= 23)
+    expect_true(
+      length(list.files(list.files(repo$root_atomic, full.names = TRUE))) >= 23
+    )
+    repo_rappster$unregister(reset = TRUE)
+    repo$unregister(reset = TRUE)
+    repo$delete(ask = FALSE)
+    repo$delete(atomic = TRUE, ask = FALSE)
+    
+  })
+  
+  test_that("PackageRepository/pull/non-overwrite", {
+    
+    ## Generate up-to-date complete repository //
+    if (FALSE) {
+      repo_rappster <- PackageRepository$new(
+        root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
+      repo_rappster$register()
+      withConditionalWorkingDirectory(    
+        root <- file.path(getwd(), "data/repo_complete")
+      )
+      
+      repo <- PackageRepository$new(root)
+      repo$ensure()
+      repo$pull(overwrite = TRUE)
+    }
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/repo_complete")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    file.rename(file.path(tempdir(), basename(root)), file.path(tempdir(), "repo_new"))
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    
+    repo_1 <- PackageRepository$new(root = file.path(tempdir(), "repo_complete"))
+    repo_2 <- PackageRepository$new(root = file.path(tempdir(), "repo_new"))
+  
+    #   repo_2$showRegistered()  
+    repo_2$unregister(reset = TRUE)
+    repo_2$removeHttpRepos()
+    repo_1$register()
+    repo_2$register()
+# print(repo_2$showRegistered()) 
+    expect_message(expect_true(repo_2$pull()), "All dependencies exist in repo")
+    repo_2$unregister(reset = TRUE)
+    repo_1$delete(ask = FALSE)
+    repo_2$delete(ask = FALSE)
+    
+  })
+  
+  test_that("PackageRepository/pull/partial", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/repo_complete")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/repo_partial")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    
+    repo_1 <- PackageRepository$new(root = file.path(tempdir(), "repo_complete"))
+    repo_2 <- PackageRepository$new(root = file.path(tempdir(), "repo_partial"))
+    
+    repo_2$unregister(reset = TRUE)
+    repo_2$removeHttpRepos()
+    repo_1$register()
+    repo_2$register()
+    #   repo_2$showRegistered()
+    
+    expect_false(all(c("bitops", "XML") %in% repo_2$show()$Package))  
+    expect_true(repo_2$pull())
+    expect_true(all(c("bitops", "XML") %in% repo_2$show()$Package))  
+      
+    ## Clean up //
+    repo_2$unregister(reset = TRUE)
+    repo_1$delete(ask = FALSE)
+    repo_2$delete(ask = FALSE)
+    
+  })
 
-  expect_true(repo$pull())
-  expect_true(length(list.files(repo$source)) >= 25)
-  repo_rappster$unregister()
-  repo$unregister()
-  repo$delete(ask = FALSE)
+  test_that("PackageRepository/pull/other packages", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/cran_4")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    
+    pkg <- "pkgKitten"
+    expect_false(repo$has(pkg))
+    expect_true(repo$pull(pkg = pkg))
+    expect_true(length(list.files(repo$source, pattern = pkg)) != 0)
+    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+      pattern = pkg)) != 0)
+    expect_true(pkg %in% repo$show(type = "source")$Package)
+    expect_true(pkg %in% repo$show(type = getOption("pkgType"))$Package)
   
-})
-
-test_that("PackageRepository/pull/atomize", {
+    ## Clean up //
+    repo$delete(ask = FALSE)
+    
+  })
   
-  withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/cran_4")
-  )
-  file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+  test_that("PackageRepository/pull/other packages/multiple", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/cran_4")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    
+    pkg <- c("stringr", "testthat")
+    expect_false(all(repo$has(pkg)))
+    expect_true(repo$pull(pkg = pkg))
+    expect_true(length(list.files(repo$source, pattern = pkg[1])) != 0)
+    expect_true(length(list.files(repo$source, pattern = pkg[2])) != 0)
+    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+      pattern = pkg[1])) != 0)
+    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+      pattern = pkg[2])) != 0)
+    expect_true(pkg[1] %in% repo$show(type = "source")$Package)
+    expect_true(pkg[2] %in% repo$show(type = "source")$Package)
+    expect_true(pkg[1] %in% repo$show(type = getOption("pkgType"))$Package)
+    expect_true(pkg[2] %in% repo$show(type = getOption("pkgType"))$Package)
+    
+    ## Clean up //
+    repo$delete(ask = FALSE)
+    
+  })
   
-  repo_rappster <- PackageRepository$new(
-    root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
-  repo_rappster$register()
-  expect_true(repo$pull(atomize = TRUE))
-  expect_true(length(list.files(repo$root_archive)) >= 23)
-  expect_true(
-    length(list.files(list.files(repo$root_archive, full.names = TRUE))) >= 23
-  )
-  repo_rappster$unregister(reset = TRUE)
-  repo$unregister(reset = TRUE)
-  repo$delete(ask = FALSE)
-  repo$delete(archive = TRUE, ask = FALSE)
-  
-})
-
-test_that("PackageRepository/pull/atomize/symlinks", {
-  
-  withConditionalWorkingDirectory(    
-    root <- file.path(getwd(), "data/cran_4")
-  )
-  file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-  repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
-  
-  repo_rappster <- PackageRepository$new(
-    root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
-  repo_rappster$register()
-  
-  expect_true(repo$pull(atomize = TRUE, symlink = TRUE))
-  expect_true(length(list.files(repo$root_archive)) >= 23)
-  expect_true(
-    length(list.files(list.files(repo$root_archive, full.names = TRUE))) >= 23
-  )
-  repo_rappster$unregister(reset = TRUE)
-  repo$unregister(reset = TRUE)
-  repo$delete(ask = FALSE)
-  repo$delete(archive = TRUE, ask = FALSE)
-  
-})
+  test_that("PackageRepository/pull/other packages/explicit repo", {
+    
+    withConditionalWorkingDirectory(    
+      root <- file.path(getwd(), "data/cran_4")
+    )
+    file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
+    repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
+    
+    pkg <- "pkgKitten"
+    expect_false(repo$has(pkg))
+  #   expect_message(
+  #     expect_true(repo$pull(pkg = pkg, repos = "http://mirrors.softliste.de/cran/")),
+  #     "mirrors\\.softlist\\.de"
+  #   )
+    expect_true(repo$pull(pkg = pkg, repos = "http://mirrors.softliste.de/cran/"))
+## TODO: implement repo check (e.g. via `capture.output()`)  
+    expect_true(length(list.files(repo$source, pattern = pkg)) != 0)
+    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+      pattern = pkg)) != 0)
+    expect_true(pkg %in% repo$show(type = "source")$Package)
+    expect_true(pkg %in% repo$show(type = getOption("pkgType"))$Package)
+    
+    ## Clean up //
+    repo$delete(ask = FALSE)
+    
+  })
+}
 
 ##------------------------------------------------------------------------------
 context("PackageRepository/refresh")
@@ -690,7 +850,7 @@ test_that("PackageRepository/register", {
   expect_true(repo$register())
   expect_identical(getOption("repos")[1], 
     structure(repo$asUrl(), names = "CRAN"))
-  expect_true(length(environment(repo$ensure)$private$.roption_repo_cache) > 0)
+  expect_true(length(getOption("reposr")$repos_0) > 0)
   
   repo <- PackageRepository$new(root = file.path(tempdir(), "cran"))
   expect_true(repo$register(before_cran = FALSE))
@@ -802,25 +962,39 @@ context("PackageRepository/showRegistered")
 test_that("PackageRepository/showRegistered", {
   
   repo <- PackageRepository$new()
+  repo$unregister(reset = TRUE)
+  if (batch_test) {
+    repos <- getOption("repos")
+    repos["CRAN"] <- "http://cran.rstudio.com"
+    options(repos = repos)
+  }
   repo$register()
-  expect_identical(repo$showRegistered(),
+  expect_equivalent(res <- repo$showRegistered(),
     c(CRAN = file.path("file://", getwd(), "cran"),
       CRAN = "http://cran.rstudio.com",
       CRANextra = "http://www.stats.ox.ac.uk/pub/RWin"
     )
-  )
-  expect_identical(repo$showRegistered(custom_only = TRUE),
+  )  
+  target <- if (batch_test) {
+    c(CRAN = file.path("file://", getwd(), "cran"),
+      CRAN = "http://cran.rstudio.com")
+  } else {
     c(CRAN = file.path("file://", getwd(), "cran"))
-  )
+  }
+  expect_identical(res <- repo$showRegistered(custom_only = TRUE), target)
   repo$unregister()
-  expect_identical(repo$showRegistered(),
+  expect_equivalent(res <- repo$showRegistered(),
     c(CRAN = "http://cran.rstudio.com",
       CRANextra = "http://www.stats.ox.ac.uk/pub/RWin"
     )
   )
-  expect_identical(repo$showRegistered(custom_only = TRUE),
+  target <- if (batch_test) {
+    c(CRAN = "http://cran.rstudio.com")
+  } else {
     structure(character(), names = character())
-  )
+  }
+  expect_identical(res <- repo$showRegistered(custom_only = TRUE), target)
+  repo$unregister(reset = TRUE)
   
 })
 
@@ -834,6 +1008,11 @@ test_that("PackageRepository/unregister", {
     root <- file.path(getwd(), "data/cran_2")
   )
   repo <- PackageRepository$new(root)
+  if (batch_test) {
+    repos <- getOption("repos")
+    repos["CRAN"] <- "http://cran.rstudio.com"
+    options(repos = repos)
+  }
   repo$register()
   expect_true(length(getOption("repos")) == 3)
   expect_true(repo$unregister())
@@ -872,6 +1051,11 @@ test_that("PackageRepository/visualizeDependencies", {
     root <- file.path(getwd(), "data/cran_3")
   )
   repo <- PackageRepository$new(root)
+  if (batch_test) {
+    repos <- getOption("repos")
+    repos["CRAN"] <- "http://cran.rstudio.com"
+    options(repos = repos)
+  }
   repo$register()
   expect_null(repo$visualizeDependencies())
   withConditionalWorkingDirectory(    
@@ -949,6 +1133,31 @@ test_that("PackageRepository/private/derive root", {
 })
 
 ##------------------------------------------------------------------------------
+context("PackageRepository/private/detect repo type")
+##------------------------------------------------------------------------------
+
+test_that("PackageRepository/private/detect repo type", {
+  
+  root <- normalizePath(file.path(tempdir(), "cran"), 
+    winslash = "/", mustWork = FALSE)
+  root_at <- paste0(root, "_atomic")
+  
+  repo <- PackageRepository$new(root)
+  repo$ensure()
+  repo$ensure(atomic = TRUE)
+  
+  self=repo
+  private <- environment(repo$ensure)$private
+  expect_identical(private$detectRepoType(), "standard")
+  
+#   repo <- PackageRepository$new(root, atomic = TRUE)
+#   repo$ensure()
+#   private <- environment(repo$ensure)$private
+#   expect_identical(private$detectRepoType(), "standard")
+#   
+})
+
+##------------------------------------------------------------------------------
 context("PackageRepository/private/detect scheme")
 ##------------------------------------------------------------------------------
 
@@ -984,24 +1193,12 @@ test_that("PackageRepository/private/ensureIndexFiles", {
   
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
+  repo$delete(ask = FALSE)
   private <- environment(repo$ensure)$private
   expect_error(private$ensureIndexFiles())
   repo$ensure()
   expect_true(all(private$ensureIndexFiles()))
   repo$delete(ask = FALSE)
-  
-})
-
-test_that("PackageRepository/private/ensureIndexFiles/archive", {
-  
-  root <- file.path(tempdir(), "cran")
-  repo <- PackageRepository$new(root = root)
-  repo$delete(archive = TRUE, ask = FALSE)
-  private <- environment(repo$ensure)$private
-  expect_error(private$ensureIndexFiles(archive = TRUE))  
-  repo$ensure(archive = TRUE)
-  expect_true(all(private$ensureIndexFiles(archive = TRUE)))
-  repo$delete(archive = TRUE, ask = FALSE)
   
 })
 
