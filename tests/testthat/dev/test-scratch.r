@@ -43,5 +43,10 @@ test_that("packrat", {
     normalizePath(path_src)
   ))
   
+  shell(sprintf("runas mklink /D %s %s", 
+    normalizePath(path_tgt_2, mustWork = FALSE),
+    normalizePath(path_src)
+  ))
+  
 })
 

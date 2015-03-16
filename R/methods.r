@@ -1,3 +1,4 @@
+#' @export
 print.PackageRepository <- function(x, full = FALSE, ...) {
   if (!full) {
     print.default(x$root)
@@ -5,15 +6,6 @@ print.PackageRepository <- function(x, full = FALSE, ...) {
     R6:::print.R6(x)
   }
 }
-
-#' @title
-#' As URL
-#' 
-#' @description
-#' Transform `$root` into a valid URL
-#' 
-#' @param scheme \code{\link{character}}.
-#' @name testMethod
-#'    
-#' @aliases testMethod
-NULL
+getPrivate <- function(x) {
+  environment(x$ensure)$private
+}

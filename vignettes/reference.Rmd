@@ -294,11 +294,11 @@ Cleans a repoitory in the sense that old package versions are either deleted or 
 repo$clean()
 ```
 
-Old versions are archived to directory `<repo-name>_archive` below the parent directory a repoitory's root directory
+Old versions are archived to directory `<repo-name>__atomic` below the parent directory a repoitory's root directory
 
 In our case, this would be the following directory
 ```{r}
-paste0(repo$root, "_archive")
+paste0(repo$root, "__atomic")
 ```
 
 #### Note

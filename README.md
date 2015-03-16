@@ -1,4 +1,4 @@
-reposr (0.2.6)
+reposr (0.2.7)
 ======
 
 Local Package Repository Management
@@ -50,9 +50,9 @@ repo$ensure()
 
 Note that you could also ensure the repository without its index files by setting `index = FALSE`.
 
-#### Ensure repository archive
+#### Ensure atomic repositories
 
-The package offers a built-in way to archive packages. This is important for two scenarios:
+The package offers a built-in way to create atomic, i.e. package-version based package repositories. This is important/can be helpful in two scenarios:
 
 1. When developing, you typically follow the following cycle:
 
@@ -60,33 +60,40 @@ The package offers a built-in way to archive packages. This is important for two
     2. Make changes which is/should be reflected in a new version number 
     3. Rebuild updated version 
     
-    While your repository will at some point thus contain multiple builds, be aware that only the latest build will be reflected in the repository index file. Thus, when you decide to "clean up" at some point, running `$clean(archive = TRUE)`) will make sure that all the outdated builds are not lost but moved to the archive where each version gets its own CRAN-like repository.
+    While your repository will at some point thus contain multiple actual builds, be aware that only the latest build will be reflected in the repository index files. Thus, when you decide to "clean up" at some point, running `$clean(archive = TRUE)`) will make sure that all the outdated builds are not lost but moved to the respective atomic package repository.
     
-2. Method `$atomize()` atomarizes the content of a repository in the sense that a own repository for each package's version is ensured below the repository archive's root directory.
+2. Method `$atomize()` atomarizes the content of a repository in the sense that a own repository for each package's version is ensured below a root directory.
 
-To summarize, the structure of the repository archive is as follows:
+The actual directory structure of the collection of atomic repositories is as follows:
 
 ```
-archive
+root
   /pkg_a
     /1.0
     /1.1
     /...
-    /5.0
+    /x.y.z
+    /...
+    /x.y
   /pkg_b
     /1.0
     /1.1
     /...
-    /5.0
+    /x.y.z
+    /...
+    /x.y
+  /...
 ```
 
-repo$ensure(archive = TRUE)
+Ideally, the actual files contained in atomic repostories would simply be soft symbolic links in order to avoid saving packages redundantly. However, so far I could not manage to realize this (see [SO post](http://stackoverflow.com/questions/28838859/creating-a-soft-symbolic-link-from-r-on-windows))
+
+repo$ensure(atomic = TRUE)
 
 ## Verify existence 
 
 ```
 repo$exists()
-repo$exists(archive = TRUE)
+repo$exists(atomic = TRUE)
 ```
 
 ### Register and unregister in R options
@@ -173,9 +180,9 @@ repo$has(c("devtools", "dplyr"))
 
 ### Maintain
 
-Remove outdated packages and refresh. If `archive = TRUE`, outdated packages are moved to a special repository archive `repo$root_archive`. 
+Remove outdated packages and refresh. If `archive = TRUE`, outdated packages are moved to a special repository archive `repo$root_atomic`. 
 
-Each outdated package build will be integrated into its own "package-version-specific"  repository: `file.path(repo$root_archive, "<pkg_name>", "<pgk_version>")`
+Each outdated package build will be integrated into its own "package-version-specific"  repository: `file.path(repo$root_atomic, "<pkg_name>", "<pgk_version>")`
 
 ```
 repo$clean(archive = TRUE)
@@ -203,11 +210,19 @@ repo$reset()
 
 ### Pull dependencies
 
+Pull all packages that your own package depens on from registered repositories:
+
 ```
 repo$pull()
 ```
 
-Ensure that repository is atomized after pull (atomic package-version-specific repositories below repository archive (`repo$browse(archive = TRUE)`)):
+It is also possible to pull an arbitrary package from a repository (which can either be one of the registerd ones or a vector of explicit repositories specified via the `repos` argument):
+
+```
+repo$pull(c("pkgKitten", "stringr")
+```
+
+Ensure that repository is atomized after pull (atomic package-version-specific repositories below repository archive (`repo$browse(atomic = TRUE)`)):
 
 ```
 repo$pull(atomize = TRUE)
@@ -224,25 +239,25 @@ repo$atomize()
 Browse repository archive:
 
 ```
-repo$browse(archive = TRUE)
+repo$browse(atomic = TRUE)
 ```
 
-### Export 
+### Push 
 
-Export entire repository:
+Push entire repository:
 
 ```
 to <- file.path(tempdir(), "cran_2")
-repo$export(to = to)
+repo$push(to = to)
 repo_2 <- PackageRepository$new(to)
 repo_2$browse()
 ```
 
-Export package(s):
+Push package(s):
 
 ```
 to <- file.path(tempdir(), "cran_3")
-repo$export(pkg = "reposr", to = to)
+repo$push(pkg = "reposr", to = to)
 repo_2 <- PackageRepository$new(to)
 repo_2$browse()
 repo_2$delete(ask = FALSE)

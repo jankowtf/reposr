@@ -79,9 +79,9 @@ repo$has(c("devtools", "dplyr"))
 ### Maintain
 
 Remove outdated packages and refresh. Outdated packages are moved to an 
-special repository archive `repo$root_archive`. 
+special repository archive `repo$root_atomic`. 
 
-Each outdated package build will be integrated into its own "one-package-only"  repository: `file.path(repo$root_archive, "<pkg_name>", "<pgk_version>")`
+Each outdated package build will be integrated into its own "one-package-only"  repository: `file.path(repo$root_atomic, "<pkg_name>", "<pgk_version>")`
 
 ```{r}
 repo$clean()
