@@ -4,8 +4,10 @@
 .*o
 .Rproj.user
 *.dll
+*Rplots.pdf
 packrat/lib*/
 packrat/src
+cran
 tests/testthat/man
 tests/testthat/packrat
 tests/testthat/repos
