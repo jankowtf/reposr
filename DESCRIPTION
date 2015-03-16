@@ -1,7 +1,7 @@
 Package: reposr
 Type: Package
 Title: Local Package Repository Management
-Version: 0.2.6
+Version: 0.2.7
 Date: 2015-03-03 21:11
 Author: Janko Thyson [aut, cre]
 Maintainer: Janko Thyson <janko.thyson@gmail.com>
@@ -15,6 +15,7 @@ Repository: CRAN
 Imports:
     conditionr,
     devtools,
+    digest,
     miniCRAN,
     R6
     
