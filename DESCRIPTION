@@ -1,8 +1,8 @@
 Package: reposr
 Type: Package
 Title: Local Package Repository Management
-Version: 0.2.9
-Date: 2015-05-27 15:34:41
+Version: 0.2.10
+Date: 2015-05-27 15:53:11
 Author: Janko Thyson [aut, cre]
 Maintainer: Janko Thyson <janko.thyson@gmail.com>
 Description: Manage local CRAN-compliant package repositories. Integrates well

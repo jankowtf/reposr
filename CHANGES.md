@@ -1,3 +1,8 @@
+# Version 0.2.10
+ - fixes #14
+
+----------
+
 # Version 0.2.9
  - updated doc
  - Merge branch 'master' into develop
