@@ -1,21 +1,15 @@
 Package: reposr
 Type: Package
 Title: Local Package Repository Management
-Version: 0.2.7
-Date: 2015-03-03 21:11
+Version: 0.2.8
+Date: 2015-05-27 14:13:16
 Author: Janko Thyson [aut, cre]
 Maintainer: Janko Thyson <janko.thyson@gmail.com>
-Description: Manage local CRAN-compliant package repositories. Integrates well 
-    (or will eventually do so) with devtools, packrat, miniCRAN, drat and 
-    checkpoint.
+Description: Manage local CRAN-compliant package repositories. Integrates well
+         (or will eventually do so) with devtools, packrat, miniCRAN, drat and
+         checkpoint.
 License: GPL (>= 2)
 Roxygen: list(wrap = FALSE)
 NeedsCompilation: no
 Repository: CRAN
-Imports:
-    conditionr,
-    devtools,
-    digest,
-    miniCRAN,
-    R6
-    
+Imports: conditionr, devtools, digest, igraph, miniCRAN, R6
