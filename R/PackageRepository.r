@@ -129,7 +129,7 @@ PackageRepository <- R6Class(
                 overwrite = overwrite
               )
               ## Package builds //
-              if (getOption("pkgType") == "win.binary") {
+              if (.Platform$pkgType == "win.binary") {
                 if (file.exists(path_tgt) && overwrite) {
                   unlink(path_tgt, force = TRUE)
                 }
@@ -188,7 +188,7 @@ PackageRepository <- R6Class(
           self$exists(strict = TRUE)
         }
       }
-      pkg_type <- getOption("pkgType")
+      pkg_type <- .Platform$pkgType
       if (pkg_type == "source") {
         binary <- FALSE
       }
@@ -362,7 +362,7 @@ PackageRepository <- R6Class(
     #' @import miniCRAN
     dependsOn = function(
       pkg = private$getFromDescription("Package"),
-      type = getOption("pkgType"),
+      type = .Platform$pkgType,
       local_only = FALSE,
       depends = TRUE,
       suggests = TRUE,
@@ -562,7 +562,7 @@ PackageRepository <- R6Class(
     },
     push = function(
       pkg = character(),
-      type = c(getOption("pkgType"), "source"),
+      type = c(.Platform$pkgType, "source"),
       to = tempdir(),
       overwrite = FALSE,
       update = FALSE
@@ -654,7 +654,7 @@ PackageRepository <- R6Class(
     },
     has = function(
       pkg = private$getFromDescription("Package"),
-      type = getOption("pkgType"),
+      type = .Platform$pkgType,
       atomic = TRUE
     ) {
       if (!length(pkg)) {
@@ -689,7 +689,7 @@ PackageRepository <- R6Class(
     pull = function(
       pkg = character(),
       repos = getOption("repos"),
-      type = c("source", getOption("pkgType")),
+      type = c("source", .Platform$pkgType),
       atomize = FALSE,
       symlink = FALSE,
       overwrite = FALSE
@@ -881,7 +881,7 @@ PackageRepository <- R6Class(
       self$ensure()
     },
     show = function(
-      type = getOption("pkgType")
+      type = .Platform$pkgType
     ) {
       private$parseIndexFile(type = type)
     },
@@ -1080,7 +1080,7 @@ PackageRepository <- R6Class(
     },
     deriveRoot = function(
       input,
-      type = getOption("pkgType")
+      type = .Platform$pkgType
     ) {
       if (type == "source") {
         gsub(paste0("file:///|/", private$.source, ".*$"), "", input)
@@ -1196,7 +1196,7 @@ PackageRepository <- R6Class(
           sapply(1:length(targets), function(ii_2) {
             path_tgt <- targets[ii_2]
             path_src <- srcs[ii_2]
-            if (getOption("pkgType") == "win.binary") {
+            if (.Platform$pkgType == "win.binary") {
               if (file.exists(path_tgt) && overwrite) {
                 unlink(path_tgt, force = TRUE)
               }
@@ -1233,7 +1233,7 @@ PackageRepository <- R6Class(
       TRUE
     },
     ensurePackageInIndex = function(
-      type = c("source", getOption("pkgType"))
+      type = c("source", .Platform$pkgType)
     ) {
       index <- private$createFakeRepoIndex()
       sapply(type, function(ii) {
@@ -1439,7 +1439,7 @@ PackageRepository <- R6Class(
       out
     },
     parseIndexFile = function(
-      type = getOption("pkgType")
+      type = .Platform$pkgType
     ) {
       self$exists(strict = TRUE)
       
@@ -1477,7 +1477,7 @@ PackageRepository <- R6Class(
     pullFromFileSystemRepos = function(
       deps,
       repos = getOption("repos"),
-      type = getOption("pkgType")
+      type = .Platform$pkgType
     ) {
       pkg_local <- setdiff(deps, self$show(type = type)$Package)
       if (length(pkg_local)) {

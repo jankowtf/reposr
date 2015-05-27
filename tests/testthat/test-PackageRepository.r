@@ -1,22 +1,10 @@
-rversion <- paste(
-  R.version$major, 
-  unlist(strsplit(R.version$minor, split="\\."))[1], sep="."
-)
+rversion <- getRversion()
 .cleanTempDir <- function(x) {
   if (grepl(basename(tempdir()), x)) {
     unlink(x, recursive = TRUE, force = TRUE)
   }
 }
-withConditionalWorkingDirectory <- function(code) {
-  wd <- getwd()
-  if (!length(grep("/tests/testthat$", wd))) {
-    setwd("tests/testthat")
-  }
-  on.exit(setwd(wd))
-  force(code)
-}
 batch_test <- basename(getwd()) == "testthat"
-# require(testthat)
 
 ##------------------------------------------------------------------------------
 context("PackageRepository/constructor")
@@ -297,9 +285,10 @@ context("PackageRepository/clean")
 
 test_that("PackageRepository/clean", {
     
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     file.copy("data/cran", tempdir(), recursive = TRUE, overwrite = TRUE)
-  )
+  })
   repo <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = repo)
   expect_true(repo$clean())
@@ -346,9 +335,10 @@ context("PackageRepository/depends on")
 
 test_that("PackageRepository/depends on", {
   
-  withConditionalWorkingDirectory(    
+  withConditionalWorkingDirectory({    
+    adaptRversionNumber("data/cran_3")
     root <- file.path(getwd(), "data/cran_3")
-  )
+  })
   repo <- PackageRepository$new(root = root)
   repo$register()
   
@@ -358,6 +348,8 @@ test_that("PackageRepository/depends on", {
       CRAN = "http://cran.rstudio.com"))
     ## --> necessary for global test run
   }
+  private <- getPrivate(repo)
+  self <- repo
   expect_true(length(repo$dependsOn()) > 0)
   expect_true(length(repo$dependsOn(local_only = TRUE)) < 6)
   repo$unregister(reset = TRUE)
@@ -498,9 +490,10 @@ context("PackageRepository/push")
 
 test_that("PackageRepository/push/entire repo", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/repo_complete")
     root <- file.path(getwd(), "data/repo_complete")
-  )
+  })
   repo <- PackageRepository$new(root = root)
   to <- file.path(tempdir(), "repo_pushed")
   expect_true(repo$push(to = to))
@@ -513,9 +506,10 @@ test_that("PackageRepository/push/entire repo", {
 
 test_that("PackageRepository/push/package", {
   
-  withConditionalWorkingDirectory(    
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/repo_complete")
     root <- file.path(getwd(), "data/repo_complete")
-  )
+  })
   repo <- PackageRepository$new(root = root)
   to <- file.path(tempdir(), "cran_new")
   expect_false(all(res <- repo$push(pkg = "reposr", to = to)))
@@ -527,9 +521,10 @@ test_that("PackageRepository/push/package", {
 
 test_that("PackageRepository/push/packages", {
   
-  withConditionalWorkingDirectory(    
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_4")
     root <- file.path(getwd(), "data/cran_4")
-  )
+  })
   repo <- PackageRepository$new(root = root)
   to <- file.path(tempdir(), "cran_new")
   
@@ -545,9 +540,10 @@ context("PackageRepository/has any")
 
 test_that("PackageRepository/has any", {
   
-  withConditionalWorkingDirectory(    
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     root <- file.path(getwd(), "data/cran")
-  )
+  })
   repo <- PackageRepository$new(root = root)
   
   expect_true(repo$hasAny())
@@ -563,13 +559,14 @@ context("PackageRepository/has package")
 test_that("PackageRepository/has packages/single", {
   
   withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     file.copy("data/cran", tempdir(), recursive = TRUE)
   })
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root) 
   expect_true(repo$has(pkg = "dummy"))
   expect_identical(repo$has(pkg = "dummy", atomic = FALSE),
-    structure(list(c(dummy = TRUE)), names = getOption("pkgType")))
+    structure(list(c(dummy = TRUE)), names = .Platform$pkgType))
   expect_identical(
     repo$has(pkg = "dummy", type = "source", atomic = FALSE),
     structure(list(c(dummy = TRUE)), names = "source")
@@ -585,6 +582,7 @@ test_that("PackageRepository/has packages/single", {
 test_that("PackageRepository/has package/multiple", {
   
   withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     file.copy("data/cran", tempdir(), recursive = TRUE)
   })
   root <- file.path(tempdir(), "cran")
@@ -593,7 +591,7 @@ test_that("PackageRepository/has package/multiple", {
   expect_identical(repo$has(pkg = pkg),
     structure(rep(TRUE, 2), names = rep("dummy", 2)))
   expect_identical(repo$has(pkg = pkg, atomic = FALSE),
-    structure(list(rep(c(dummy = TRUE), 2)), names = getOption("pkgType")))
+    structure(list(rep(c(dummy = TRUE), 2)), names = .Platform$pkgType))
   expect_identical(
     repo$has(pkg = pkg, type = "source", atomic = FALSE),
     structure(list(rep(c(dummy = TRUE), 2)), names = "source")
@@ -613,9 +611,10 @@ context("PackageRepository/pull")
 if (!batch_test) {
   test_that("PackageRepository/pull", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({
+      adaptRversionNumber("data/cran_4")
       root <- file.path(getwd(), "data/cran_4")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
     
@@ -633,9 +632,10 @@ if (!batch_test) {
   
   test_that("PackageRepository/pull/atomize", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({  
+      adaptRversionNumber("data/cran_4")
       root <- file.path(getwd(), "data/cran_4")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
     
@@ -656,9 +656,10 @@ if (!batch_test) {
   
   test_that("PackageRepository/pull/atomize/symlinks", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({    
+      adaptRversionNumber("data/cran_4")
       root <- file.path(getwd(), "data/cran_4")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
     
@@ -685,18 +686,20 @@ if (!batch_test) {
       repo_rappster <- PackageRepository$new(
         root = file.path(Sys.getenv("HOME"), "code/cran_rappster"))
       repo_rappster$register()
-      withConditionalWorkingDirectory(    
+      withConditionalWorkingDirectory({
+        adaptRversionNumber("data/repo_complete")
         root <- file.path(getwd(), "data/repo_complete")
-      )
+      })
       
       repo <- PackageRepository$new(root)
       repo$ensure()
       repo$pull(overwrite = TRUE)
     }
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({    
+      adaptRversionNumber("data/repo_complete")
       root <- file.path(getwd(), "data/repo_complete")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     file.rename(file.path(tempdir(), basename(root)), file.path(tempdir(), "repo_new"))
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
@@ -719,13 +722,15 @@ if (!batch_test) {
   
   test_that("PackageRepository/pull/partial", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({
+      adaptRversionNumber("data/repo_complete")
       root <- file.path(getwd(), "data/repo_complete")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({
+      adaptRversionNumber("data/repo_partial")
       root <- file.path(getwd(), "data/repo_partial")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     
     repo_1 <- PackageRepository$new(root = file.path(tempdir(), "repo_complete"))
@@ -750,9 +755,10 @@ if (!batch_test) {
 
   test_that("PackageRepository/pull/other packages", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({
+      adaptRversionNumber("data/cran_4")
       root <- file.path(getwd(), "data/cran_4")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
     
@@ -760,10 +766,10 @@ if (!batch_test) {
     expect_false(repo$has(pkg))
     expect_true(repo$pull(pkg = pkg))
     expect_true(length(list.files(repo$source, pattern = pkg)) != 0)
-    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+    expect_true(length(list.files(repo[[.Platform$pkgType]], 
       pattern = pkg)) != 0)
     expect_true(pkg %in% repo$show(type = "source")$Package)
-    expect_true(pkg %in% repo$show(type = getOption("pkgType"))$Package)
+    expect_true(pkg %in% repo$show(type = .Platform$pkgType)$Package)
   
     ## Clean up //
     repo$delete(ask = FALSE)
@@ -772,9 +778,10 @@ if (!batch_test) {
   
   test_that("PackageRepository/pull/other packages/multiple", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({
+      adaptRversionNumber("data/cran_4")
       root <- file.path(getwd(), "data/cran_4")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
     
@@ -783,14 +790,14 @@ if (!batch_test) {
     expect_true(repo$pull(pkg = pkg))
     expect_true(length(list.files(repo$source, pattern = pkg[1])) != 0)
     expect_true(length(list.files(repo$source, pattern = pkg[2])) != 0)
-    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+    expect_true(length(list.files(repo[[.Platform$pkgType]], 
       pattern = pkg[1])) != 0)
-    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+    expect_true(length(list.files(repo[[.Platform$pkgType]], 
       pattern = pkg[2])) != 0)
     expect_true(pkg[1] %in% repo$show(type = "source")$Package)
     expect_true(pkg[2] %in% repo$show(type = "source")$Package)
-    expect_true(pkg[1] %in% repo$show(type = getOption("pkgType"))$Package)
-    expect_true(pkg[2] %in% repo$show(type = getOption("pkgType"))$Package)
+    expect_true(pkg[1] %in% repo$show(type = .Platform$pkgType)$Package)
+    expect_true(pkg[2] %in% repo$show(type = .Platform$pkgType)$Package)
     
     ## Clean up //
     repo$delete(ask = FALSE)
@@ -799,9 +806,10 @@ if (!batch_test) {
   
   test_that("PackageRepository/pull/other packages/explicit repo", {
     
-    withConditionalWorkingDirectory(    
+    withConditionalWorkingDirectory({    
+      adaptRversionNumber("data/cran_4")
       root <- file.path(getwd(), "data/cran_4")
-    )
+    })
     file.copy(root, tempdir(), recursive = TRUE, overwrite = TRUE)
     repo <- PackageRepository$new(root = file.path(tempdir(), "cran_4"))
     
@@ -814,10 +822,10 @@ if (!batch_test) {
     expect_true(repo$pull(pkg = pkg, repos = "http://mirrors.softliste.de/cran/"))
 ## TODO: implement repo check (e.g. via `capture.output()`)  
     expect_true(length(list.files(repo$source, pattern = pkg)) != 0)
-    expect_true(length(list.files(repo[[getOption("pkgType")]], 
+    expect_true(length(list.files(repo[[.Platform$pkgType]], 
       pattern = pkg)) != 0)
     expect_true(pkg %in% repo$show(type = "source")$Package)
-    expect_true(pkg %in% repo$show(type = getOption("pkgType"))$Package)
+    expect_true(pkg %in% repo$show(type = .Platform$pkgType)$Package)
     
     ## Clean up //
     repo$delete(ask = FALSE)
@@ -869,6 +877,7 @@ context("PackageRepository/remove packages")
 test_that("PackageRepository/remove/all types", {
   
   withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_2")
     file.copy("data/cran_2", tempdir(), recursive = TRUE)
   })
   root <- file.path(tempdir(), "cran_2")
@@ -887,6 +896,7 @@ test_that("PackageRepository/remove/all types", {
 test_that("PackageRepository/remove/specific types", {
   
   withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_2")
     file.copy("data/cran_2", tempdir(), recursive = TRUE)
   })
   root <- file.path(tempdir(), "cran_2")
@@ -896,7 +906,7 @@ test_that("PackageRepository/remove/specific types", {
   expect_true(length(
     list.files(repo$root, recursive = TRUE, pattern = "dummy")) > 0)
   expect_true(repo$remove(pkg = "dummy", 
-    type = getOption("pkgType"), ask = FALSE))
+    type = .Platform$pkgType, ask = FALSE))
   expect_false(length(
     list.files(repo$root, recursive = TRUE, pattern = "dummy")) > 0)
   repo$delete(ask = FALSE)
@@ -910,9 +920,10 @@ context("PackageRepository/reset")
 test_that("PackageRepository/reset", {
   
   root <- file.path(tempdir(), "cran")
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     file.copy("data/cran", tempdir(), recursive = TRUE)
-  )
+  })
   repo <- PackageRepository$new(root = root)
   expect_true(repo$reset(ask = FALSE))
   expect_true(!length(list.files(repo$root, recursive = TRUE, pattern = "dummy")))
@@ -926,9 +937,10 @@ context("PackageRepository/show")
 
 test_that("PackageRepository/show", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_2")
     root <- file.path(getwd(), "data/cran_2")
-  )
+  })
   repo <- PackageRepository$new(root = root)
   expect_true(length(index <- repo$show()) > 0)
   expect_equal(index$Package, "dummy")    
@@ -1004,9 +1016,10 @@ context("PackageRepository/unregister")
 
 test_that("PackageRepository/unregister", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_2")
     root <- file.path(getwd(), "data/cran_2")
-  )
+  })
   repo <- PackageRepository$new(root)
   if (batch_test) {
     repos <- getOption("repos")
@@ -1022,14 +1035,16 @@ test_that("PackageRepository/unregister", {
 
 test_that("PackageRepository/unregister/reset", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_2")
     root <- file.path(getwd(), "data/cran_2")
-  )
+  })
   repo_1 <- PackageRepository$new(root)
   repo_1$register()  
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_3")
     root <- file.path(getwd(), "data/cran_3")
-  )
+  })
   repo_2 <- PackageRepository$new(root)
   repo_2$register()  
 
@@ -1047,9 +1062,10 @@ context("PackageRepository/visualizeDependencies")
 
 test_that("PackageRepository/visualizeDependencies", {
   
-  withConditionalWorkingDirectory(    
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran_3")
     root <- file.path(getwd(), "data/cran_3")
-  )
+  })
   repo <- PackageRepository$new(root)
   if (batch_test) {
     repos <- getOption("repos")
@@ -1089,16 +1105,17 @@ context("PackageRepository/private/archivePackages")
 
 test_that("PackageRepository/private/archivePackages", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     tmp <- file.path(getwd(), "data/cran")
-  )
+  })
   file.copy(tmp, tempdir(), recursive = TRUE)
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
   # self = repo  
   private <- environment(repo$ensure)$private
   expect_is(res <- private$archivePackages(refresh = FALSE), "list")
-  expect_identical(res[[getOption("pkgType")]], c(dummy_1.0 = TRUE, dummy_1.1 = TRUE))
+  expect_identical(res[[.Platform$pkgType]], c(dummy_1.0 = TRUE, dummy_1.1 = TRUE))
   repo$delete(ask = FALSE)
   
 })
@@ -1209,20 +1226,21 @@ context("PackageRepository/private/getLatestPackages")
 test_that("PackageRepository/private/getLatestPackages", {
   
   root <- file.path(tempdir(), "cran")
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     file.copy("data/cran", tempdir(), recursive = TRUE)
-  )
+  })
   repo <- PackageRepository$new(root = root)
   priv <- environment(repo$ensure)$private
   expect_is(res <- priv$getLatestPackages(refresh = FALSE), "list")
-  expect_identical(res[[getOption("pkgType")]],
+  expect_identical(res[[.Platform$pkgType]],
     data.frame(
      name = "dummy",
      version = "1.2",
-     type = getOption("pkgType"),
+     type = .Platform$pkgType,
      pattern = "/dummy_1.2\\.",
      fname = "dummy_1.2",
-     fpath = file.path(repo[[getOption("pkgType")]], "dummy_1.2.zip"),
+     fpath = file.path(repo[[.Platform$pkgType]], "dummy_1.2.zip"),
      index = as.integer(3),
      stringsAsFactors = FALSE
     )
@@ -1238,18 +1256,19 @@ context("PackageRepository/private/getOldPackages")
 test_that("PackageRepository/private/getOldPackages", {
   
   root <- file.path(tempdir(), "cran")
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     file.copy("data/cran", tempdir(), recursive = TRUE)
-  )
+  })
   repo <- PackageRepository$new(root = root)
   priv <- environment(repo$ensure)$private
   expect_is(res <- priv$getOldPackages(refresh = FALSE), "list")
-  expect_identical(res[[getOption("pkgType")]][1,],
+  expect_identical(res[[.Platform$pkgType]][1,],
     data.frame(
      name = "dummy",
      version = "1.0",
-     type = getOption("pkgType"),
-     fpath = file.path(repo[[getOption("pkgType")]], "dummy_1.0.zip"),
+     type = .Platform$pkgType,
+     fpath = file.path(repo[[.Platform$pkgType]], "dummy_1.0.zip"),
      stringsAsFactors = FALSE
     )
   )
@@ -1263,9 +1282,10 @@ context("PackageRepository/private/getVersionMatrixFromDescription")
 
 test_that("PackageRepository/private/getVersionMatrixFromDescription", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     tmp <- file.path(getwd(), "data/cran")
-  )
+  })
   file.copy(tmp, tempdir(), recursive = TRUE)
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root = root)
@@ -1283,9 +1303,10 @@ context("PackageRepository/private/getVersionMatrixFromRepo")
 
 test_that("PackageRepository/private/getVersionMatrixFromRepo", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     tmp <- file.path(getwd(), "data/cran")
-  )
+  })
   file.copy(tmp, tempdir(), recursive = TRUE)
   root <- file.path(tempdir(), "cran")
   repo <- PackageRepository$new(root)
@@ -1303,9 +1324,10 @@ context("PackageRepository/private/parse index file")
 
 test_that("PackageRepository/private/parse index file", {
   
-  withConditionalWorkingDirectory(
+  withConditionalWorkingDirectory({
+    adaptRversionNumber("data/cran")
     root <- file.path(getwd(), "data/cran")
-  )
+  })
   expect_is(repo <- PackageRepository$new(root = root), "PackageRepository")
   private <- environment(repo$ensure)$private
   expect_true(length(index <- private$parseIndexFile()) > 0)
