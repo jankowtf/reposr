@@ -36,7 +36,7 @@ PackageRepository <- R6Class(
   ##############################################################################
   ## Public //
   ############################################################################## 
-
+  
   public = list(
     scheme = "none",
     normalize = TRUE,
@@ -71,9 +71,9 @@ PackageRepository <- R6Class(
       this <- if (!atomic) self else PackageRepository$new(self$root_atomic)
       path <- this$root
       scheme <- match.arg(scheme, c("file", "http", "ftp"))
-#       has_url_prefix <- length(grep(":///", repos)) > 0
+      #       has_url_prefix <- length(grep(":///", repos)) > 0
       repos_raw <- gsub("///", "", gsub("^.*(?=///)", "", path, perl = TRUE))
-#       repos_raw <- normalizePath(repos_raw, winslash = "/", mustWork = FALSE)
+      #       repos_raw <- normalizePath(repos_raw, winslash = "/", mustWork = FALSE)
       if (scheme == "file") {
         out <- file.path("file://", repos_raw)
       } else if (scheme == "http"){
@@ -93,15 +93,15 @@ PackageRepository <- R6Class(
       private$.asNonUrl(root)
     },
     atomize = function(
-#       pkgs = list(),
+      #       pkgs = list(),
       type = private$subdirs,
       symlink = FALSE,
       overwrite = FALSE,
       refresh = FALSE
     ) {
-#       if (!length(pkgs)) {
-        pkgs <- private$getLatestPackages(type = type, refresh = refresh)  
-#       }
+      #       if (!length(pkgs)) {
+      pkgs <- private$getLatestPackages(type = type, refresh = refresh)  
+      #       }
       out <- lapply(pkgs, function(ii) {
         if (nrow(ii)) {
           sapply(1:nrow(ii), function(row) {
@@ -192,40 +192,44 @@ PackageRepository <- R6Class(
       if (pkg_type == "source") {
         binary <- FALSE
       }
+      ## Fixes situations in which subdir for respective R version does not
+      ## exist yet
+      if (!self$exists(subdir = pkg_type)) {
+        self$ensure(subdir = pkg_type)
+      }
       
       wd <- getwd()
       .buffer <- new.env()
       
-#       repos_list <- self$root
-#       out <- sapply(seq(along = repos_list), function(ii) {
-#         repos <- repos_list[[ii]]
-          repos <- self$root
+      #       repos_list <- self$root
+      #       out <- sapply(seq(along = repos_list), function(ii) {
+      #         repos <- repos_list[[ii]]
+      repos <- self$root
+      
+      path_bin <- normalizePath(if (pkg_type != "source") self[[pkg_type]], 
+        winslash = "/")
+      path_source <- self$source
+      tryCatch({
+        ## Build and cache //
+        devtools::document(pkg = wd)
         
-        path_bin <- normalizePath(if (pkg_type != "source") {
-           self[[pkg_type]]
-        }, winslash = "/")
-        path_source <- self$source
-        tryCatch({
-          ## Build and cache //
-          devtools::document(pkg = wd)
-          
-          ## Binary //
-          if (binary && !is.null(path_bin)) {
-            tmp <- devtools::build(pkg = wd, path = path_bin, binary = TRUE)
-            assign(pkg_type, tmp, envir = .buffer)
-          }
-# .buffer$win.binary
-          ## Source //
-          tmp <- devtools::build(pkg = wd, path = path_source)
-          .buffer$source <- tmp
-          if (refresh) {
-            self$refresh()
-          }
-          if (clean) {
-            self$clean(refresh = refresh)
-          }
-          TRUE
-        },
+        ## Binary //
+        if (binary && !is.null(path_bin)) {
+          tmp <- devtools::build(pkg = wd, path = path_bin, binary = TRUE)
+          assign(pkg_type, tmp, envir = .buffer)
+        }
+        # .buffer$win.binary
+        ## Source //
+        tmp <- devtools::build(pkg = wd, path = path_source)
+        .buffer$source <- tmp
+        if (refresh) {
+          self$refresh()
+        }
+        if (clean) {
+          self$clean(refresh = refresh)
+        }
+        TRUE
+      },
         error = function(cond) {
           message(conditionMessage(cond))
           FALSE
@@ -262,7 +266,8 @@ PackageRepository <- R6Class(
       atomic = FALSE,
       ask = TRUE,
       strict = 0,
-      plain = FALSE
+      plain = FALSE,
+      subdir = character()
     ) {
       if (atomic) {
         if (!exists("root", private$cache, inherits = FALSE)) {
@@ -276,47 +281,50 @@ PackageRepository <- R6Class(
         })
       }
       root <- self$root
-      scheme <- private$detectScheme(root)
-      if (scheme %in% c("none", "file")) {
-        root <- private$.asNonUrl(root)
-        idx <- file.exists(root)
+      path_this <- if (!length(subdir)) {
+        root
       } else {
-        idx <- private$respondsUrl(root)
+        private$getSubDirs(subdir)
+      }
+      
+      scheme <- private$detectScheme(path_this)
+      idx <- if (scheme %in% c("none", "file")) {
+        path_this <- private$.asNonUrl(path_this)
+        file.exists(path_this)
+      } else {
+        private$isRespondingUrl(path_this)
       }
       if (!idx) {
         if (strict == 1) {
-          conditionr::signalCondition(
+          conditionr::newMessage(
             condition = "NegativeExistenceCheck",
             msg = c(
               "Repository does not exist",
-              Path = root
-            ),
-            type = "message"
+              Path = path_this
+            )
           )
         } else if (strict == 2) {
-          conditionr::signalCondition(
+          conditionr::newWarning(
             condition = "NegativeExistenceCheck",
             msg = c(
               "Repository does not exist",
-              Path = root
-            ),
-            type = "warning"
+              Path = path_this
+            )
           )
         } else if (strict == 3) {
-          conditionr::signalCondition(
+          conditionr::newError(
             condition = "NegativeExistenceCheck",
             msg = c(
               "Repository does not exist",
-              Path = root
-            ),
-            type = "error"
+              Path = path_this
+            )
           )
         } 
         return(
           if (plain) {
             FALSE
           } else {
-            structure(FALSE, names = root)
+            structure(FALSE, names = path_this)
           }
         )
       }
@@ -325,7 +333,7 @@ PackageRepository <- R6Class(
           condition = "VerifyDeleteOperation",
           msg = c(
             "Verify repository deletion",
-            Path = root
+            Path = path_this
           ),
           type = "message"
         )
@@ -336,18 +344,18 @@ PackageRepository <- R6Class(
           return(if (plain) {
             FALSE
           } else {
-            structure(FALSE, names = root)
+            structure(FALSE, names = path_this)
           })
         }
       }
       if (scheme %in% c("none", "file")) {
-        unlink(root, recursive = TRUE, force = TRUE)
+        unlink(path_this, recursive = TRUE, force = TRUE)
       } else {
         conditionr::signalCondition(
           condition = "DeletionOfRemoteNotSupportedYet",
           msg = c(
             "Deletion of remote repositories not supported yet",
-            Root = root,
+            Path = path_this,
             Suggestions = "delete manually or via FTP client"
           ),
           type = "error"
@@ -356,7 +364,7 @@ PackageRepository <- R6Class(
       if (plain) {
         TRUE
       } else {
-        structure(TRUE, names = root)
+        structure(TRUE, names = path_this)
       }
     },
     #' @import miniCRAN
@@ -411,7 +419,7 @@ PackageRepository <- R6Class(
           )
         }
         private$ensurePackageInIndex()
-#         repo$buildInto()
+        #         repo$buildInto()
       }
       repo <- if (!local_only) {
         getOption("repos")
@@ -434,28 +442,34 @@ PackageRepository <- R6Class(
       overwrite = FALSE, 
       ask = TRUE, 
       plain = FALSE,
-      index = TRUE
+      index = TRUE,
+      subdir = character()
     ) {
       if (atomic) {
         if (!exists("root", private$cache, inherits = FALSE)) {
           private$cache$root <- self$root
         }
-#         self$root <- self$root_atomic
+        #         self$root <- self$root_atomic
         self$root <- self$root_atomic_pkg_vsn
-#         self$atomic <- TRUE
+        #         self$atomic <- TRUE
         on.exit({
           self$root <- private$cache$root
-#           self$atomic <- FALSE
+          #           self$atomic <- FALSE
         })
       }
       root <- self$root
-      if (overwrite && file.exists(root)) {
+      path_this <- if (!length(subdir)) {
+        root
+      } else {
+        private$getSubDirs(subdir)
+      }
+      if (overwrite && file.exists(path_this)) {
         if (ask) {
           conditionr::signalCondition(
             condition = "VerifyOverwriteOperation",
             msg = c(
               "Verify repository overwrite",
-              Root = root
+              Path = path_this
             ),
             type = "message"
           )
@@ -466,30 +480,32 @@ PackageRepository <- R6Class(
             return(if (plain) {
               FALSE 
             } else {
-              structure(FALSE, names = root)
+              structure(FALSE, names = path_this)
             })
           }
         }
-        self$delete(ask = FALSE, plain = plain)
+        self$delete(ask = FALSE, plain = plain, subdir = subdir)
       } 
-      scheme <- private$detectScheme(root)
+      scheme <- private$detectScheme(path_this)
       
       if (scheme %in% c("none", "file")) {
-      ## Local directory //        
+        ## Local directory //        
         if (!atomic) {
-          subdirs <- sapply(private$subdirs, function(ii) {
-            self[[ii]]
-          })
+          subdirs <- if (!length(subdir)) {
+            sapply(private$subdirs, function(ii) self[[ii]])
+          } else {
+            private$getSubDirs(subdir)
+          }
           if (scheme == "file") {
             subdirs <- private$.asNonUrl(subdirs)
           }
           sapply(subdirs, dir.create, recursive = TRUE, showWarnings = FALSE)
         } else {
-#           repo_tmp <- PackageRepository$new(private$getAtomicRepoPath())$ensure()
+          #           repo_tmp <- PackageRepository$new(private$getAtomicRepoPath())$ensure()
           repo_tmp <- PackageRepository$new(self$root)$ensure()
         }
       } else {
-      ## Remote directory //
+        ## Remote directory //
         conditionr::signalCondition(
           condition = "EnsuranceOfRemoteNotSupportedYet",
           msg = c(
@@ -501,18 +517,19 @@ PackageRepository <- R6Class(
         )
       }
       if (index) {
-        private$ensureIndexFiles()
+        private$ensureIndexFiles(subdir = subdir)
       }
       if (plain) {
         TRUE
       } else {
-        structure(TRUE, names = root)
+        structure(TRUE, names = path_this)
       }
     },
     exists = function(
       atomic = self$atomic, 
       strict = FALSE, 
-      plain = FALSE
+      plain = FALSE,
+      subdir = character()
     ) {
       if (atomic) {
         if (!exists("root", private$cache, inherits = FALSE)) {
@@ -527,27 +544,37 @@ PackageRepository <- R6Class(
       }
       root <- self$root
       scheme <- private$detectScheme(root)
-      if (scheme %in%  c("none", "file")) {
+      idx <- if (scheme %in%  c("none", "file")) {
         if (scheme == "file") {
           root <- private$.asNonUrl(root)
         } 
-        idx <- file.exists(root)
+        path_this <- if (!length(subdir)) {
+          root
+        } else {
+          private$getSubDirs(subdir)
+        }
+        file.exists(path_this)
       } else {
-        idx <- private$respondsUrl(root)
+        path_this <- if (!length(subdir)) {
+          root
+        } else {
+          private$getSubDirs(subdir)
+        }
+        private$isRespondingUrl(path_this)
       }
       if (!idx) {
         if (!strict) {
           if (plain) {
             FALSE
           } else {
-            structure(FALSE, names = root)
+            structure(FALSE, names = path_this)
           }
         } else {
           conditionr::signalCondition(
             condition = "InvalidPackageRepositoryLocation",
             msg = c(
               "Package repository directory does not exist",
-              Root = root
+              Path = path_this
             ),
             type = "error"
           )
@@ -556,7 +583,7 @@ PackageRepository <- R6Class(
         if (plain) {
           TRUE
         } else {
-          structure(TRUE, names = root)
+          structure(TRUE, names = path_this)
         }
       }
     },
@@ -567,9 +594,9 @@ PackageRepository <- R6Class(
       overwrite = FALSE,
       update = FALSE
     ) {
-## TODO: implement update functionality (# 10)     
+      ## TODO: implement update functionality (# 10)     
       if (!length(pkg)) {
-      ## Entire repo //  
+        ## Entire repo //  
         dir.create(to, recursive = TRUE, showWarnings = FALSE)
         sapply(list.files(self$root, full.names = TRUE), file.copy, to = to, 
           recursive = TRUE, overwrite = overwrite)
@@ -590,8 +617,8 @@ PackageRepository <- R6Class(
           }, USE.NAMES = FALSE)
         }, USE.NAMES = FALSE)
         repo_to$refresh()
-#         names(out) <- NULL
-#         unlist(out)
+        #         names(out) <- NULL
+        #         unlist(out)
         out
       }
     },
@@ -608,20 +635,20 @@ PackageRepository <- R6Class(
       subdirs <- private$getSubDirs(type)
       
       ## Instantiate remaining repos //
-#       repos_rem_names <- private$instantiateRemainingRepos()
-#       opts <- getOption("reposr")
+      #       repos_rem_names <- private$instantiateRemainingRepos()
+      #       opts <- getOption("reposr")
       
       ## Loop over subdirs //
       out <- lapply(seq(along = subdirs), function(ii) {
         type <- names(subdirs[ii])
         
-#         message("Checking for missing dependencies ...")
+        #         message("Checking for missing dependencies ...")
         
         pkgs <- self$show(type = type)[ , "Package"] 
         if (length(pkgs)) {
-#           pkgs_src <- unique(unlist(lapply(repos_rem_names, function(name) {
-#             pkgs <- opts[[name]]$show(type = type)[ , "Package"]
-#           })))
+          #           pkgs_src <- unique(unlist(lapply(repos_rem_names, function(name) {
+          #             pkgs <- opts[[name]]$show(type = type)[ , "Package"]
+          #           })))
           setdiff(deps, pkgs)
         } else {
           deps 
@@ -645,7 +672,7 @@ PackageRepository <- R6Class(
         type <- names(subdirs[ii])
         path <- subdirs[[ii]]
         structure(length(private$parseIndexFile(type = type)) != 0,
-                  names = type)
+          names = type)
       })
       if (!atomic) {
         out <- structure(any(out), names = self$root)
@@ -710,18 +737,18 @@ PackageRepository <- R6Class(
       
       ## Internal/additional/non-CRAN packages //
       private$ensureAdditionalRepositories(deps = deps)
-## TODO: refactor/make more intuitive/informative (# 11)      
-
+      ## TODO: refactor/make more intuitive/informative (# 11)      
+      
       pullInner = function(deps, repos, type, atomize, symlink) {
-#         conditionr::signalCondition(
-#           condition = "PackageDependencyPull",
-#           msg = c(
-#             "Pulling package dependencies",
-#             Type = type,
-#             Dependencies = paste(deps, collapse = ", ")
-#           ),
-#           type = "message"
-#         )
+        #         conditionr::signalCondition(
+        #           condition = "PackageDependencyPull",
+        #           msg = c(
+        #             "Pulling package dependencies",
+        #             Type = type,
+        #             Dependencies = paste(deps, collapse = ", ")
+        #           ),
+        #           type = "message"
+        #         )
         suppressWarnings(miniCRAN::makeRepo(deps, path = self$root, 
           repos = repos, type = type, download = TRUE))
         private$pullFromFileSystemRepos(deps = deps, type = type)
@@ -746,8 +773,8 @@ PackageRepository <- R6Class(
             message("All dependencies exist in repo")
           }
         })
-## TODO: include version information in decision whether to pull a certain
-## package or not (# 12)       
+        ## TODO: include version information in decision whether to pull a certain
+        ## package or not (# 12)       
       }
       self$refresh()
       TRUE
@@ -762,9 +789,9 @@ PackageRepository <- R6Class(
     ) {
       repo <- self$asUrl()
       current <- getOption("repos")
-#       if (!length(private$.roption_repo_cache)) {
-#         private$.roption_repo_cache <- current
-#       }
+      #       if (!length(private$.roption_repo_cache)) {
+      #         private$.roption_repo_cache <- current
+      #       }
       if (!repo %in% current) {
         updated <- if (before_cran) {
           c(structure(repo, names = name), current)
@@ -851,7 +878,7 @@ PackageRepository <- R6Class(
       type = c("mac.binary", "source", "win.binary")
     ) {
       type <- match.arg(type, c("mac.binary", "source", "win.binary"),
-                        several.ok = TRUE)
+        several.ok = TRUE)
       subdirs <- sapply(private$subdirs, function(ii) {
         self[[ii]]
       }, USE.NAMES = FALSE)[type]
@@ -900,10 +927,10 @@ PackageRepository <- R6Class(
     ) {
       repo <- self$asUrl()
       if (reset) {
-#         if (length(private$.roption_repo_cache)) {
+        #         if (length(private$.roption_repo_cache)) {
         if (length(repos_0 <- getOption("reposr")$repos_0)) {          
-#           options("repos" = private$.roption_repo_cache)
-#           private$.roption_repo_cache <- character()
+          #           options("repos" = private$.roption_repo_cache)
+          #           private$.roption_repo_cache <- character()
           options("repos" = repos_0)
           TRUE
         } else {
@@ -946,17 +973,17 @@ PackageRepository <- R6Class(
       }
     }
   ),
-
+  
   ##############################################################################
   ## Private //
   ##############################################################################
-
+  
   private = list(
     .root = character(),
     .mac.binary = "bin/macosx/contrib",
     .win.binary = "bin/windows/contrib",
     .source = "src/contrib",
-#     .roption_repo_cache = character(),
+    #     .roption_repo_cache = character(),
     cache = new.env(parent = emptyenv()),
     rversion = paste(
       R.version$major, 
@@ -1052,7 +1079,7 @@ PackageRepository <- R6Class(
         stop("Ensure repository first (`$ensure()`")
       }
       ch_std_1 <- all(c("src", "bin") %in% files)
-#       ch_ato_1 <- all(!c("src", "bin") %in% files) 
+      #       ch_ato_1 <- all(!c("src", "bin") %in% files) 
       if (ch_std_1) {
         dirs <- list.dirs(self$root)
         ch_std_2 <- all(subdirs %in% dirs)
@@ -1122,14 +1149,17 @@ PackageRepository <- R6Class(
       }
     },
     ensureIndexFiles = function(
-      overwrite = FALSE
+      overwrite = FALSE,
+      subdir = character()
     ) {  
       path <- self$root
       ## Depends on existinting repository root directory //
       self$exists(strict = TRUE)
-      subdirs <- sapply(private$subdirs, function(ii) {
-        self[[ii]]
-      }, USE.NAMES = FALSE)
+      subdirs <- if (!length(subdir)) {
+        sapply(private$subdirs, function(ii) self[[ii]], USE.NAMES = FALSE)
+      } else {
+        private$getSubDirs(subdir)
+      }
       scheme <- private$detectScheme(self$root)
       if (scheme %in% c("none", "file")) {
         subdirs <- private$.asNonUrl(subdirs)
@@ -1146,15 +1176,15 @@ PackageRepository <- R6Class(
               tools::write_PACKAGES(".", type = type)         
               TRUE
             },
-            error = function(cond) {
-              message(conditionMessage(cond))
-              FALSE
-            },
-            warning = function(cond) {
-              message(conditionMessage(cond))
-              TRUE
-            },
-            finally = setwd(wd_0)
+              error = function(cond) {
+                message(conditionMessage(cond))
+                FALSE
+              },
+              warning = function(cond) {
+                message(conditionMessage(cond))
+                TRUE
+              },
+              finally = setwd(wd_0)
             )
           } else {
             TRUE
@@ -1282,7 +1312,7 @@ PackageRepository <- R6Class(
         path <- subdirs[[ii]]
         
         files <- list.files(path, full.names = TRUE)
-      
+        
         pkgs <- private$parseIndexFile(type = type)     
         
         ## Object //
@@ -1332,7 +1362,7 @@ PackageRepository <- R6Class(
         self$refresh()
       }
       subdirs <- private$getSubDirs(type)
-
+      
       ## Loop over subdirs //
       out <- lapply(seq(along = subdirs), function(ii) {
         type <- names(subdirs[ii])
@@ -1419,7 +1449,7 @@ PackageRepository <- R6Class(
       if (!length(repo)) {
         repo <- getOption("repos")["CRAN"][1]
       }
-#       repo <- reposr::PackageRepository$new(repo) 
+      #       repo <- reposr::PackageRepository$new(repo) 
       # file.exists(repo$asNonUrl())
       vsn_mat <- repo$show()[ , c("Package", "Version")]
       colnames(vsn_mat) <- c("name", "version")
@@ -1520,7 +1550,7 @@ PackageRepository <- R6Class(
         })
       }
     },
-    respondsUrl = function(x) {
+    isRespondingUrl = function(x) {
       !inherits(try(readLines(x)), "try-error")
     },
     validateExistence = function(
@@ -1562,11 +1592,11 @@ PackageRepository <- R6Class(
       }
     }
   ),
-
+  
   ##############################################################################
   ## Active //
   ##############################################################################
-
+  
   active = list(
     root = function(value) {
       if (!missing(value)) {
@@ -1581,7 +1611,7 @@ PackageRepository <- R6Class(
       }
       
       normalize <- self$normalize
-#       repos_raw <- gsub("///", "", gsub("^.*(?=///)", "", value, perl = TRUE))
+      #       repos_raw <- gsub("///", "", gsub("^.*(?=///)", "", value, perl = TRUE))
       repos_raw <- gsub("///?", "", gsub("^.*/?(?=//)", "", value, perl = TRUE))
       if (normalize && !scheme %in% c("http", "ftp")) {
         repos_raw <- normalizePath(repos_raw, winslash = "/", mustWork = FALSE)
@@ -1602,7 +1632,7 @@ PackageRepository <- R6Class(
             "Invalid scheme",
             Scheme = scheme,
             Valid = paste(c("none", "file", "http", "ftp"),
-                             collapse = ", ")
+              collapse = ", ")
           ),
           type = "error"
         )
@@ -1620,11 +1650,11 @@ PackageRepository <- R6Class(
     },
     mac.binary = function() {
       structure(file.path(self$root, private$.mac.binary, private$rversion),
-                names = "mac.binary")
+        names = "mac.binary")
     },
     win.binary = function() {
       structure(file.path(self$root, private$.win.binary, private$rversion),
-                names = "win.binary")
+        names = "win.binary")
     },
     source = function() {
       structure(file.path(self$root, private$.source), names = "source")
