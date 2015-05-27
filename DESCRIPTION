@@ -16,6 +16,7 @@ Imports:
     conditionr,
     devtools,
     digest,
+    igraph,
     miniCRAN,
     R6
     
