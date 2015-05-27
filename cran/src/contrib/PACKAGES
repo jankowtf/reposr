@@ -1,8 +1,0 @@
-Package: reposr
-Version: 0.2
-Imports: conditionr, devtools, R6
-Suggests: miniCRAN
-License: GPL (>= 2)
-MD5sum: e134df2ffaf2087020bde1e4af29e78e
-NeedsCompilation: no
-
