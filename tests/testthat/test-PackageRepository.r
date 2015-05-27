@@ -5,6 +5,8 @@ rversion <- getRversion()
   }
 }
 batch_test <- basename(getwd()) == "testthat"
+# private <- getPrivate(repo)
+# self <- repo
 
 ##------------------------------------------------------------------------------
 context("PackageRepository/constructor")
@@ -348,8 +350,6 @@ test_that("PackageRepository/depends on", {
       CRAN = "http://cran.rstudio.com"))
     ## --> necessary for global test run
   }
-  private <- getPrivate(repo)
-  self <- repo
   expect_true(length(repo$dependsOn()) > 0)
   expect_true(length(repo$dependsOn(local_only = TRUE)) < 6)
   repo$unregister(reset = TRUE)

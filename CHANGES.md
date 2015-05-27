@@ -1,3 +1,10 @@
+# Version 0.2.9
+ - updated doc
+ - Merge branch 'master' into develop
+ - Merge branch 'release-0.2.8'
+
+----------
+
 # Version 0.2.8
  - R-3.2.0 pkgType
  - Merge branch 'develop' into feat-minicran
