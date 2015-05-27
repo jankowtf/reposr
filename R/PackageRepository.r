@@ -99,9 +99,7 @@ PackageRepository <- R6Class(
       overwrite = FALSE,
       refresh = FALSE
     ) {
-      #       if (!length(pkgs)) {
       pkgs <- private$getLatestPackages(type = type, refresh = refresh)  
-      #       }
       out <- lapply(pkgs, function(ii) {
         if (nrow(ii)) {
           sapply(1:nrow(ii), function(row) {
@@ -1168,10 +1166,12 @@ PackageRepository <- R6Class(
           type <- names(subdirs[ii])
           fpath <- file.path(path, c("PACKAGES", "PACKAGES.gz"))
           out <- if (!all(file.exists(fpath)) | overwrite) {
-            wd_0   <- getwd()
+            wd_0 <- getwd()
+# print(wd_0)            
             on.exit(setwd(wd_0))
             tryCatch({
               setwd(path)
+# print(getwd())              
               #         tools::write_PACKAGES(".", type=.Platform$pkgType)
               tools::write_PACKAGES(".", type = type)         
               TRUE
@@ -1305,6 +1305,7 @@ PackageRepository <- R6Class(
         self$refresh()
       }
       subdirs <- private$getSubDirs(type)
+      sapply(names(subdirs), function(subdir) self$ensure(subdir = subdir))
       
       ## Loop over subdirs //
       out <- lapply(seq(along = subdirs), function(ii) {
