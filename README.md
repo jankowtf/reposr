@@ -1,4 +1,4 @@
-reposr (0.2.7)
+reposr
 ======
 
 Local Package Repository Management
